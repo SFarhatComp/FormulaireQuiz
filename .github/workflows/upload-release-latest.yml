@@ -1,0 +1,32 @@
+name: Upload Latest ZIP to Release
+
+on:
+  workflow_run:
+    workflows: ["build-windows-exe"]
+    types:
+      - completed
+
+jobs:
+  upload-latest:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download the artifact
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: build-windows-exe
+          name: FormulaireQuiz-Windows-Executable
+          run_id: ${{ github.event.workflow_run.id }}
+          path: .
+
+      - name: Upload to latest GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: Latest Build
+          files: FormulaireQuiz-Windows-Executable.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
