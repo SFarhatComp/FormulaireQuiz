@@ -2,7 +2,7 @@ name: Upload Latest ZIP to Release
 
 on:
   workflow_run:
-    workflows: ["build-windows-exe"]
+    workflows: ["Build Windows Executable"]
     types:
       - completed
 
