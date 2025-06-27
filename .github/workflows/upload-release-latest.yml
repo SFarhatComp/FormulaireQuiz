@@ -6,6 +6,9 @@ on:
     types:
       - completed
 
+permissions:
+  contents: write
+
 jobs:
   upload-latest:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -19,7 +22,10 @@ jobs:
           name: FormulaireQuiz-Windows-Executable
           run_id: ${{ github.event.workflow_run.id }}
           path: .
-
+      
+      - name: Move ZIP to root for release
+        run: mv FormulaireQuiz-Windows-Executable/FormulaireQuiz-Windows-Executable.zip .
+      
       - name: Upload to latest GitHub Release
         uses: softprops/action-gh-release@v1
         with:
