@@ -5,7 +5,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Install system dependencies for tkinter
-RUN apt-get update && apt-get install -y tk
+RUN apt-get update && apt-get install -y tk && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
 COPY requirements.txt .
