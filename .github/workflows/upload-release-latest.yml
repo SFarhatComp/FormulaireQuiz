@@ -1,4 +1,4 @@
-name: Upload Latest ZIP to Release
+name: Upload Latest Executable to Release
 
 on:
   workflow_run:
@@ -18,21 +18,21 @@ jobs:
       - name: Download the artifact
         uses: dawidd6/action-download-artifact@v3
         with:
-          workflow: build-windows-exe
+          workflow: Build Windows Executable
           name: FormulaireQuiz-Windows-Executable
           run_id: ${{ github.event.workflow_run.id }}
           path: .
-      
-      - name: Move ZIP to root for release
-        run: mv FormulaireQuiz-Windows-Executable/FormulaireQuiz-Windows-Executable.zip .
-      
+
+      - name: Debug — list downloaded files
+        run: |
+          echo "Downloaded contents:"
+          find . -type f
+
       - name: Upload to latest GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
           name: Latest Build
-          files: FormulaireQuiz-Windows-Executable.zip
-          draft: false
-          prerelease: false
+          files: FormulaireQuiz.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
