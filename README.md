@@ -180,6 +180,6 @@ To make the application easy to share and run on other computers without requiri
 
 You can always download the latest Windows executable here:
 
-[⬇️ Download Latest Build](https://github.com/SFarhatComp/FormulaireQuiz/releases/latest/download/FormulaireQuiz-Windows-Executable.zip)
+[⬇️ Download Latest Build](https://github.com/SFarhatComp/FormulaireQuiz/releases/latest/download/FormulaireQuiz.exe)
 
 ![Build Status](https://github.com/SFarhatComp/FormulaireQuiz/actions/workflows/build-windows-exe.yml/badge.svg)
