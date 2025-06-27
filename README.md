@@ -175,3 +175,11 @@ To make the application easy to share and run on other computers without requiri
 
 7.  **Find the Executable:**
     The final executable will be in the `dist\` folder, named `app.exe`. You can send this file to any Windows user. 
+
+## 📦 Download
+
+You can always download the latest Windows executable here:
+
+[⬇️ Download Latest Build](https://github.com/SFarhatComp/FormulaireQuiz/releases/latest/download/FormulaireQuiz-Windows-Executable.zip)
+
+![Build Status](https://github.com/SFarhatComp/FormulaireQuiz/actions/workflows/build-windows-exe.yml/badge.svg)
