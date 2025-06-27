@@ -157,15 +157,21 @@ To make the application easy to share and run on other computers without requiri
     cd C:\path\to\your\FormulaireQuiz
     ```
 
-4.  **Install Dependencies:**
+4. **Set up a virtual environment (recommended):**
+   ```cmd
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+5.  **Install Dependencies:**
     ```cmd
     pip install -r requirements.txt
     ```
 
-5.  **Build the Executable:**
+6.  **Build the Executable:**
     ```cmd
     pyinstaller --onefile --windowed app.py
     ```
 
-6.  **Find the Executable:**
+7.  **Find the Executable:**
     The final executable will be in the `dist\` folder, named `app.exe`. You can send this file to any Windows user. 
