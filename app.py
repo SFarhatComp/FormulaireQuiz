@@ -29,7 +29,7 @@ class RemoveQuestionDialog(simpledialog.Dialog):
             self.selection = [self.listbox.get(i) for i in selected_indices]
 
 class FormApp:
-    def __init__(self, root, excel_file):
+    def __init__(self, root, excel_file, initial_questions=None):
         self.root = root
         self.excel_file = excel_file
         # Extract just the filename for the title
@@ -37,7 +37,11 @@ class FormApp:
         self.root.title(f"Form to Excel - {file_title}")
         self.root.geometry("450x250")
 
-        self.questions = list(QUESTIONS)  # Start with default questions
+        if initial_questions is not None:
+            self.questions = initial_questions
+        else:
+            self.questions = list(QUESTIONS)  # Start with default questions
+        
         self.entries = {}
         
         self.form_frame = tk.Frame(self.root, padx=20, pady=20)
@@ -151,19 +155,45 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()
 
-    # Ask user for a filepath using a file dialog
-    filepath = filedialog.asksaveasfilename(
-        defaultextension=".xlsx",
-        filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
-        title="Choose a save location",
-        initialfile="responses.xlsx",
+    # Ask if user wants to open an existing file.
+    open_existing = messagebox.askyesno(
+        "Open Existing File?",
+        "Do you want to open and modify an existing response file?",
         parent=root
     )
+
+    filepath = None
+    questions_from_file = None
+
+    if open_existing:
+        # User wants to open a file
+        filepath = filedialog.askopenfilename(
+            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+            title="Select a response file to open",
+            parent=root
+        )
+        if filepath:
+            try:
+                df = pd.read_excel(filepath)
+                # Load questions from columns, excluding the timestamp
+                questions_from_file = [col for col in df.columns if col != 'Timestamp']
+            except Exception as e:
+                messagebox.showerror("Error", f"Could not read the file: {e}", parent=root)
+                filepath = None  # Reset filepath so app doesn't open
+    else:
+        # User wants to create a new file
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+            title="Create a new response file",
+            initialfile="responses.xlsx",
+            parent=root
+        )
 
     if filepath:
         # If we have a filepath, show the main window and start the app
         root.deiconify()
-        app = FormApp(root, filepath)
+        app = FormApp(root, filepath, initial_questions=questions_from_file)
         root.mainloop()
     else:
         # If user cancels, destroy the hidden root window and exit

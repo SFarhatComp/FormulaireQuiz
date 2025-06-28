@@ -12,13 +12,15 @@ This document outlines the design for a local, offline form application built wi
 
 ## 2. Key Features
 
--   **Dynamic File Selection:**
-    -   On startup, the application prompts the user with a native file dialog to select a save location and filename for the responses.
+-   **Flexible File Handling:**
+    -   On startup, the user is prompted to either **create a new response file** or **open an existing one**.
+    -   **Open Existing File:** If an existing `.xlsx` file is opened, the application reads its column headers to dynamically reconstruct the form, allowing the user to seamlessly continue a previous session.
+    -   **Create New File:** If creating a new file, a native file dialog allows the user to select a save location and filename.
     -   The chosen filename is displayed in the application's title bar.
 
--   **Customizable Questions:**
-    -   The application starts with a default set of questions (e.g., "Name," "Email").
-    -   **Add Question:** A dedicated button allows the user to add new questions to the form at runtime via a simple dialog box.
+-   **Dynamic Question Management:**
+    -   The application starts with a default set of questions if creating a new file.
+    -   **Add Question:** A dedicated button allows the user to add new questions to the form at runtime.
     -   **Remove Question:** A button allows the user to select and remove one or more questions from the form via a multi-select dialog.
     -   The form layout dynamically adjusts as questions are added or removed.
 
