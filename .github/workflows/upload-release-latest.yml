@@ -1,0 +1,38 @@
+name: Upload Latest Executable to Release
+
+on:
+  workflow_run:
+    workflows: ["Build Windows Executable"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  upload-latest:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download the artifact
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: Build Windows Executable
+          name: FormulaireQuiz-Windows-Executable
+          run_id: ${{ github.event.workflow_run.id }}
+          path: .
+
+      - name: Debug — list downloaded files
+        run: |
+          echo "Downloaded contents:"
+          find . -type f
+
+      - name: Upload to latest GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: Latest Build
+          files: FormulaireQuiz.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
