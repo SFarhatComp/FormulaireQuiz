@@ -201,19 +201,26 @@ class FormWizardApp:
             
             for question in form_info["questions"]:
                 q_label = question["label"] if isinstance(question, dict) else question
+                value = self.patient_data.get(q_label)
+
+                if isinstance(question, dict): # This is a conditional question (Yes/No Radio)
+                    is_yes = value.get() == "Yes"
+                    final_data[q_label] = "Yes" if is_yes else "No"
+                    
+                    if not is_yes:
+                        # If 'No', fill the hidden fields with a placeholder
+                        fill_value = question.get("fill_value", "N/A")
+                        for hidden_q in question["hides"]:
+                            final_data[hidden_q] = fill_value
+                    # If 'Yes', the sub-questions will be handled as normal questions in subsequent loop iterations.
                 
-                # Handle conditional questions where the answer is "No"
-                if isinstance(question, dict) and self.patient_data[q_label].get() == "No":
-                    final_data[q_label] = "No"
-                    fill_value = question.get("fill_value", "N/A")
-                    for hidden_q in question["hides"]:
-                        final_data[hidden_q] = fill_value
-                else:
-                    value = self.patient_data.get(q_label)
+                elif q_label not in final_data: # This is a standard question, but only if not already handled
                     if isinstance(value, tk.StringVar):
                         final_data[q_label] = value.get()
-                    else: # This is a raw value from a skipped form
-                        final_data[q_label] = value if value is not None else ""
+                    elif value is not None: # This is a raw value from a skipped form
+                        final_data[q_label] = value
+                    else:
+                        final_data[q_label] = "" # Failsafe for any other case
 
         try:
             new_entry_df = pd.DataFrame([final_data])
