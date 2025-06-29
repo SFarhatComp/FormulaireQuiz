@@ -4,6 +4,7 @@ from tkinter import messagebox, filedialog
 import pandas as pd
 from datetime import datetime
 import os
+from openpyxl.utils import get_column_letter
 from questions_data import FORMS_DATA
 
 class FormWizardApp:
@@ -215,32 +216,38 @@ class FormWizardApp:
 
         try:
             new_entry_df = pd.DataFrame([final_data])
+            
+            # Prepare the final dataframe BEFORE opening the file for writing
+            if os.path.exists(filepath):
+                existing_df = pd.read_excel(filepath)
+                # Align columns before concatenating
+                all_cols = existing_df.columns.union(new_entry_df.columns)
+                existing_df = existing_df.reindex(columns=all_cols)
+                new_entry_df = new_entry_df.reindex(columns=all_cols)
+                df_to_save = pd.concat([existing_df, new_entry_df], ignore_index=True)
+            else:
+                df_to_save = new_entry_df
 
-            # Use ExcelWriter to gain access to the worksheet and adjust column widths
+            # Now, write the final dataframe to the file using ExcelWriter
             with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
-                if os.path.exists(filepath):
-                    existing_df = pd.read_excel(filepath)
-                    # Align columns before concatenating
-                    all_cols = existing_df.columns.union(new_entry_df.columns)
-                    existing_df = existing_df.reindex(columns=all_cols)
-                    new_entry_df = new_entry_df.reindex(columns=all_cols)
-                    df = pd.concat([existing_df, new_entry_df], ignore_index=True)
-                else:
-                    df = new_entry_df
+                df_to_save.to_excel(writer, index=False, sheet_name='Responses')
                 
-                df.to_excel(writer, index=False, sheet_name='Responses')
-                
-                # Auto-fit columns
+                # Auto-fit columns, considering header length
                 worksheet = writer.sheets['Responses']
-                for column in worksheet.columns:
-                    max_length = 0
-                    column_letter = column[0].column_letter
-                    for cell in column:
+                for i, column_name in enumerate(df_to_save.columns):
+                    column_letter = get_column_letter(i + 1)
+                    max_length = len(str(column_name))  # Check header length first
+                    
+                    # Find the max length in the column's cells
+                    for cell in worksheet[column_letter]:
+                        if cell.row == 1: # Already checked header
+                            continue
                         try:
                             if len(str(cell.value)) > max_length:
                                 max_length = len(str(cell.value))
                         except:
                             pass
+                    
                     adjusted_width = (max_length + 2)
                     worksheet.column_dimensions[column_letter].width = adjusted_width
 
