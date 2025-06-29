@@ -16,7 +16,7 @@ class FormWizardApp:
 
         self.form_keys = list(FORMS_DATA.keys())
         self.current_page = 0
-        self.patient_data = {}
+        self.patient_data = {} # Will use a unique key: (page_index, question_label)
         self.pages = {}
         self.widget_map = {}
 
@@ -69,7 +69,7 @@ class FormWizardApp:
             canvas.pack(side="left", fill="both", expand=True)
             scrollbar.pack(side="right", fill="y")
             
-            self._populate_page(scrollable_frame, form_data["questions"])
+            self._populate_page(scrollable_frame, form_data["questions"], i)
             self._bind_recursive(scrollable_frame, canvas)
 
             # Add some bottom padding to prevent the last widget from being cut off
@@ -77,7 +77,7 @@ class FormWizardApp:
             padding_frame.pack()
             self._bind_scroll(padding_frame, canvas)
 
-    def _populate_page(self, parent, questions):
+    def _populate_page(self, parent, questions, page_index):
         self.widget_map[parent] = {}
         for question in questions:
             row_frame = tk.Frame(parent)
@@ -85,8 +85,9 @@ class FormWizardApp:
             
             if isinstance(question, dict): # Conditional question
                 q_label = question["label"]
+                unique_key = (page_index, q_label)
                 var = tk.StringVar(value="No") # Default to 'No'
-                self.patient_data[q_label] = var
+                self.patient_data[unique_key] = var
                 
                 label = ttk.Label(row_frame, text=q_label, width=40)
                 label.pack(side="left", padx=5)
@@ -101,12 +102,13 @@ class FormWizardApp:
                     "hides": question["hides"], 
                     "widgets_to_hide": []
                 }
-                var.trace_add("write", lambda *args, q=question, p=parent: self._toggle_visibility(q, p))
+                var.trace_add("write", lambda *args, q=question, p=parent, key=unique_key: self._toggle_visibility(q, p, key))
 
             else: # Standard question
                 q_label = question
+                unique_key = (page_index, q_label)
                 var = tk.StringVar()
-                self.patient_data[q_label] = var
+                self.patient_data[unique_key] = var
 
                 label = ttk.Label(row_frame, text=q_label, width=40)
                 entry = ttk.Entry(row_frame, textvariable=var, width=50)
@@ -118,8 +120,8 @@ class FormWizardApp:
                     if q_label in data["hides"]:
                         data["widgets_to_hide"].append(row_frame)
 
-    def _toggle_visibility(self, question_data, parent):
-        var = self.patient_data[question_data["label"]]
+    def _toggle_visibility(self, question_data, parent, key):
+        var = self.patient_data[key]
         is_visible = var.get() == "Yes"
         
         widgets_to_hide = self.widget_map[parent][question_data["label"]]["widgets_to_hide"]
@@ -169,7 +171,8 @@ class FormWizardApp:
                     # Mark all questions in this form to be skipped by storing the value directly
                     fill_value = form_data.get("fill_value", "N/A")
                     for q in form_data["questions"]:
-                        self.patient_data[q] = fill_value
+                        unique_key = (next_page_index, q)
+                        self.patient_data[unique_key] = fill_value
                     
                     # Try to skip to the page after this one
                     self.current_page += 1
@@ -191,37 +194,46 @@ class FormWizardApp:
         if not filepath:
             return
 
-        # Prepare data for saving
-        final_data = {}
-        # Add a timestamp first
-        final_data["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        final_data = {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        column_counts = {}
 
-        for form_key in self.form_keys:
+        # First pass: collect all data with unique keys
+        for i, form_key in enumerate(self.form_keys):
             form_info = FORMS_DATA[form_key]
             
             for question in form_info["questions"]:
-                q_label = question["label"] if isinstance(question, dict) else question
-                value = self.patient_data.get(q_label)
-
-                if isinstance(question, dict): # This is a conditional question (Yes/No Radio)
-                    is_yes = value.get() == "Yes"
-                    final_data[q_label] = "Yes" if is_yes else "No"
-                    
-                    if not is_yes:
-                        # If 'No', fill the hidden fields with a placeholder
-                        fill_value = question.get("fill_value", "N/A")
-                        for hidden_q in question["hides"]:
-                            final_data[hidden_q] = fill_value
-                    # If 'Yes', the sub-questions will be handled as normal questions in subsequent loop iterations.
+                base_label = question['label'] if isinstance(question, dict) else question
                 
-                elif q_label not in final_data: # This is a standard question, but only if not already handled
-                    if isinstance(value, tk.StringVar):
-                        final_data[q_label] = value.get()
-                    elif value is not None: # This is a raw value from a skipped form
-                        final_data[q_label] = value
-                    else:
-                        final_data[q_label] = "" # Failsafe for any other case
+                # Generate unique column name
+                count = column_counts.get(base_label, 0) + 1
+                column_counts[base_label] = count
+                unique_col_name = f"{base_label}_{count}" if count > 1 else base_label
 
+                # Get value using unique (page, label) key
+                unique_data_key = (i, base_label)
+                value = self.patient_data.get(unique_data_key)
+
+                if isinstance(question, dict): # Conditional
+                    is_yes = value.get() == "Yes"
+                    final_data[unique_col_name] = "Yes" if is_yes else "No"
+
+                    if not is_yes:
+                        fill_value = question.get("fill_value", "N/A")
+                        for hidden_q_label in question['hides']:
+                            # Also generate unique names for these hidden questions
+                            h_count = column_counts.get(hidden_q_label, 0) + 1
+                            column_counts[hidden_q_label] = h_count
+                            h_unique_name = f"{hidden_q_label}_{h_count}" if h_count > 1 else hidden_q_label
+                            final_data[h_unique_name] = fill_value
+                
+                else: # Standard or skipped question
+                    if isinstance(value, tk.StringVar):
+                        final_data[unique_col_name] = value.get()
+                    elif value is not None: # Skipped page
+                        final_data[unique_col_name] = value
+                    else: # Failsafe
+                        final_data[unique_col_name] = ""
+        
         try:
             new_entry_df = pd.DataFrame([final_data])
             
@@ -265,23 +277,24 @@ class FormWizardApp:
                     PatternFill(start_color="ADD8E6", end_color="ADD8E6", fill_type="solid")  # Light Blue 2
                 ]
 
-                # Create a map of question -> color
-                column_to_color_map = {}
+                # Create a map of question base label -> color
+                section_color_map = {}
                 color_index = 0
                 for form_key in self.form_keys:
                     fill = section_fills[color_index % len(section_fills)]
                     for q in FORMS_DATA[form_key]["questions"]:
                         q_label = q["label"] if isinstance(q, dict) else q
-                        column_to_color_map[q_label] = fill
+                        section_color_map[q_label] = fill
                     color_index += 1
 
                 # Auto-fit columns and color headers
                 for i, column_name in enumerate(df_to_save.columns):
                     column_letter = get_column_letter(i + 1)
                     
-                    # Color the header cell
-                    if column_name in column_to_color_map:
-                        worksheet.cell(row=1, column=i + 1).fill = column_to_color_map[column_name]
+                    # Find base label to look up color
+                    base_label = column_name.rsplit('_', 1)[0] if '_' in column_name and column_name.rsplit('_', 1)[1].isdigit() else column_name
+                    if base_label in section_color_map:
+                        worksheet.cell(row=1, column=i + 1).fill = section_color_map[base_label]
 
                     # Auto-sizing logic
                     max_length = len(str(column_name))
