@@ -166,10 +166,10 @@ class FormWizardApp:
                     parent=self.root
                 )
                 if not proceed:
-                    # Mark all questions in this form to be skipped
+                    # Mark all questions in this form to be skipped by storing the value directly
                     fill_value = form_data.get("fill_value", "N/A")
                     for q in form_data["questions"]:
-                        self.patient_data[q] = tk.StringVar(value=fill_value)
+                        self.patient_data[q] = fill_value
                     
                     # Try to skip to the page after this one
                     self.current_page += 1
@@ -209,8 +209,11 @@ class FormWizardApp:
                     for hidden_q in question["hides"]:
                         final_data[hidden_q] = fill_value
                 else:
-                    var = self.patient_data.get(q_label)
-                    final_data[q_label] = var.get() if var else ""
+                    value = self.patient_data.get(q_label)
+                    if isinstance(value, tk.StringVar):
+                        final_data[q_label] = value.get()
+                    else: # This is a raw value from a skipped form
+                        final_data[q_label] = value if value is not None else ""
 
         try:
             new_entry_df = pd.DataFrame([final_data])
