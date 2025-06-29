@@ -83,10 +83,10 @@ class FormWizardApp:
             row_frame = tk.Frame(parent)
             row_frame.pack(fill="x", pady=2)
             
-            if isinstance(question, dict): # Conditional question
+            if isinstance(question, dict): # All dict-based questions are Yes/No
                 q_label = question["label"]
                 unique_key = (page_index, q_label)
-                var = tk.StringVar(value="No") # Default to 'No'
+                var = tk.StringVar(value="No")
                 self.patient_data[unique_key] = var
                 
                 label = ttk.Label(row_frame, text=q_label, width=40)
@@ -97,14 +97,15 @@ class FormWizardApp:
                 yes_rb.pack(side="left")
                 no_rb.pack(side="left")
                 
-                # Store widgets to be hidden
-                self.widget_map[parent][q_label] = {
-                    "hides": question["hides"], 
-                    "widgets_to_hide": []
-                }
-                var.trace_add("write", lambda *args, q=question, p=parent, key=unique_key: self._toggle_visibility(q, p, key))
+                # If it's a conditional question, set up the hiding logic
+                if question.get("type") == "yesno_conditional":
+                    self.widget_map[parent][q_label] = {
+                        "hides": question["hides"], 
+                        "widgets_to_hide": []
+                    }
+                    var.trace_add("write", lambda *args, q=question, p=parent, key=unique_key: self._toggle_visibility(q, p, key))
 
-            else: # Standard question
+            else: # Standard question (text entry)
                 q_label = question
                 unique_key = (page_index, q_label)
                 var = tk.StringVar()
@@ -217,7 +218,8 @@ class FormWizardApp:
                     is_yes = value.get() == "Yes"
                     final_data[unique_col_name] = "Yes" if is_yes else "No"
 
-                    if not is_yes:
+                    if not is_yes and question.get("type") == "yesno_conditional":
+                        # If 'No' on a conditional question, fill the hidden fields
                         fill_value = question.get("fill_value", "N/A")
                         for hidden_q_label in question['hides']:
                             # Also generate unique names for these hidden questions
