@@ -233,7 +233,8 @@ class FormWizardApp:
                     # Mark all questions in this form to be skipped by storing the value directly
                     fill_value = form_data.get("fill_value", "N/A")
                     for q in form_data["questions"]:
-                        unique_key = (next_page_index, q)
+                        base_label = q['label'] if isinstance(q, dict) else q
+                        unique_key = (next_page_index, base_label)
                         self.patient_data[unique_key] = fill_value
                     
                     # Try to skip to the page after this one
