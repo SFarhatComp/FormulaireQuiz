@@ -21,6 +21,10 @@ The application is architected as a "wizard," presenting the user with a sequenc
     -   Each form page is generated dynamically from the `questions_data.py` structure.
     -   Long forms are equipped with a scrollbar to ensure all fields are accessible.
 
+-   **User Experience Enhancements:**
+    -   **Reliable Scrolling:** All form pages, especially long ones, feature robust mouse-wheel scrolling that is bound to all UI elements, ensuring a smooth and predictable user experience.
+    -   **UI Padding:** Sufficient padding is added to the end of each form to prevent the last question from being obscured by the navigation buttons.
+
 -   **Advanced Conditional Logic:**
     -   **Field-level conditions:** Answering "No" to specific questions (e.g., "Congenital Malformation?", "Postop MRI?") automatically hides irrelevant sub-questions from the UI.
     -   **Form-level conditions:** For certain sections (e.g., "Follow Up Echo 1, 2, 3"), the application first asks if the event occurred. If the answer is "No," the entire form is skipped.
@@ -29,7 +33,8 @@ The application is architected as a "wizard," presenting the user with a sequenc
     -   Upon pressing "Submit" on the final page, the user is prompted to choose a save location for the Excel file.
     -   All collected data from the 13 forms is consolidated into a single row.
     -   Skipped fields or forms are automatically populated with `"0"` or `"N/A"` as specified in the rules, ensuring a complete and consistently structured data set.
-    -   Form sections are demarcated in the Excel file with separator columns (e.g., `--- Medical History ---`) for enhanced readability.
+    -   **Visual Grouping in Excel:** To enhance readability, the header cell for each question is given a background color corresponding to its form section. This provides clear visual grouping without the need for extra columns.
+    -   **Auto-Sized Columns:** Excel columns are automatically resized to fit the length of the longest content, including the question headers, eliminating the need for manual adjustments.
 
 ## 3. Technical Implementation
 
@@ -48,7 +53,6 @@ The application is architected as a "wizard," presenting the user with a sequenc
 ├── Dockerfile              # Containerization instructions
 ├── README.md               # User-facing documentation
 ├── .gitignore              # Specifies files for Git to ignore
-└── Custom.txt              # The source text for the questionnaire
 ```
 
 
