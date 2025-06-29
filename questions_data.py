@@ -49,7 +49,8 @@ FORMS_DATA = {
             {"label": "Neurological dysfunction?", "type": "yesno"},
             {"label": "Critical state?", "type": "yesno"},
             {"label": "Pulmonary HTN?", "type": "yesno"},
-            "Preop PAP", "Level of emergency (1= elective, 2= emergent, 3=urgent, 4=salvage)",
+            "Preop PAP",
+            {"label": "Level of emergency", "type": "dropdown", "options": ["1= elective", "2= emergent", "3=urgent", "4=salvage"]},
             {"label": "Preop need for ventilation support?", "type": "yesno"},
             "KT EF (%)", "KT Systolic pressure (mm Hg)", "KT Diastolic pressure (mm Hg)", "Preop cardiac rythm", "Other comorbidities"
         ]
@@ -60,9 +61,9 @@ FORMS_DATA = {
             {"label": "Aortic stenosis?", "type": "yesno"},
             {"label": "Aortic regurgitation?", "type": "yesno"},
             {"label": "Mixed stenosis/regurgitation?", "type": "yesno"},
-            "If mixed, predominance? (1=AR, 2=AS, 3=Balanced)",
+            {"label": "If mixed, predominance?", "type": "dropdown", "options": ["1=AR", "2=AS", "3=Balanced"]},
             {"label": "Endocarditis?", "type": "yesno"},
-            "Status of endocarditis? (1=Active, 2=Recently cured, 3=Past)",
+            {"label": "Status of endocarditis?", "type": "dropdown", "options": ["1=Active", "2=Recently cured", "3=Past"]},
             {"label": "Ascending aorta aneuvrysm?", "type": "yesno"},
             {"label": "Aortic root aneuvrysm?", "type": "yesno"},
             {"label": "Rhumatic disease?", "type": "yesno"},
@@ -78,11 +79,16 @@ FORMS_DATA = {
     "FORM_5": {
         "title": "Operative Data",
         "questions": [
-            "CPB time (min)", "Clamp time (min)", "Reprfusion time (min)", "Circulatory arrest time (min)", "Time of circulatory arrest", "Cardioplegia type (1=antegrade, 2=retrograde, 3=both)",
+            "CPB time (min)", "Clamp time (min)", "Reprfusion time (min)", "Circulatory arrest time (min)", "Time of circulatory arrest",
+            {"label": "Cardioplegia type", "type": "dropdown", "options": ["1=antegrade", "2=retrograde", "3=both"]},
             {"label": "Del Nido cardioplegia?", "type": "yesno"},
             "Temperature (celsius)", "Surgery duration (min)", "Other",
             {"label": "Intraoperative death?", "type": "yesno"},
-            "Surgery approach (1= full sternotomy, 2= upper hemisternotomy, 3= right-anterior minithoracotomy)", "Surgical graft model", "Surgical graft size (mm)", "AV morphology (1=uni, 2-bi, 3=tri, 4=quadri, 5= prosthesis)", "Bicuspid phenotype (1=R-L, 2=R-N)", "Sievers classification",
+            {"label": "Surgery approach", "type": "dropdown", "options": ["1= full sternotomy", "2= upper hemisternotomy", "3= right-anterior minithoracotomy"]},
+            "Surgical graft model", "Surgical graft size (mm)",
+            {"label": "AV morphology", "type": "dropdown", "options": ["1=uni", "2=bi", "3=tri", "4=quadri", "5= prosthesis"]},
+            {"label": "Bicuspid phenotype", "type": "dropdown", "options": ["1=R-L", "2=R-N"]},
+            "Sievers classification",
             {"label": "Isolated AVR?", "type": "yesno"},
             {"label": "Associated procedures?", "type": "yesno"},
             "Number of associated procedures?",
@@ -103,7 +109,8 @@ FORMS_DATA = {
             {"label": "CVVH?", "type": "yesno"},
             {"label": "Reintervention needed for bleeding?", "type": "yesno"},
             {"label": "Transfusion?", "type": "yesno"},
-            "PRBC qty", "Platelets qty", "Cryo", "FFP qty", "Intubation duration (1= less than 24h, 2= 24 to48h, 3= more than 48h)",
+            "PRBC qty", "Platelets qty", "Cryo", "FFP qty",
+            {"label": "Intubation duration", "type": "dropdown", "options": ["1= less than 24h", "2= 24 to 48h", "3= more than 48h"]},
             {"label": "Reintubation?", "type": "yesno"},
             {"label": "Delirium?", "type": "yesno"},
             {"label": "Stroke?", "type": "yesno"},
@@ -124,7 +131,9 @@ FORMS_DATA = {
             {"label": "Other Rx?", "type": "yesno"},
             {"label": "Other complications", "type": "yesno"},
             {"label": "Death?", "type": "yesno"},
-            "Date of death", "STS death classification (1=. valve-related, 2= sudden/unexplained, 3= cardiac, 4= other)", "Cause of death"
+            "Date of death",
+            {"label": "STS death classification", "type": "dropdown", "options": ["1=valve-related", "2=sudden/unexplained", "3=cardiac", "4=other"]},
+            "Cause of death"
         ]
     },
     "FORM_7": {
@@ -196,7 +205,8 @@ FORMS_DATA = {
             {"label": "Reintervention needed?", "type": "yesno"},
             "Cause of reintervention", "Date of reintervention",
             {"label": "Death?", "type": "yesno"},
-            "STS classification of death (1=valve-related, 2=sudden/unexplained, 3=cardiac, 4=other)", "Date of death"
+            {"label": "STS classification of death", "type": "dropdown", "options": ["1=valve-related", "2=sudden/unexplained", "3=cardiac", "4=other"]},
+            "Date of death"
         ]
     },
     "FORM_13": {
@@ -224,7 +234,8 @@ FORMS_DATA = {
             {"label": "Reintervention needed?", "type": "yesno"},
             "Cause of reintervention", "Date of reintervention",
             {"label": "Death?", "type": "yesno"},
-            "STS classification of death (1=valve-related, 2=sudden/unexplained, 3=cardiac, 4=other)", "Date of death"
+            {"label": "STS classification of death", "type": "dropdown", "options": ["1=valve-related", "2=sudden/unexplained", "3=cardiac", "4=other"]},
+            "Date of death"
         ]
     }
 } 

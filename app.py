@@ -100,11 +100,50 @@ class FormWizardApp:
                 # If it's a conditional question, set up the hiding logic
                 if question.get("type") == "yesno_conditional":
                     self.widget_map[parent][q_label] = {
-                        "hides": question["hides"], 
+                        "hides": question["hides"],
                         "widgets_to_hide": []
                     }
                     var.trace_add("write", lambda *args, q=question, p=parent, key=unique_key: self._toggle_visibility(q, p, key))
 
+            elif isinstance(question, dict) and question.get("type") == "dropdown":
+                q_label = question["label"]
+                unique_key = (page_index, q_label)
+
+                display_options, value_map = [], {}
+                for option in question["options"]:
+                    parts = option.split('=', 1)
+                    value = parts[0].strip()
+                    display_text = f"{value}: {parts[1].strip()}" if len(parts) > 1 else value
+                    display_options.append(display_text)
+                    value_map[display_text] = value
+
+                # This var holds the actual value (e.g., '1')
+                actual_value_var = self.patient_data.get(unique_key)
+                if not isinstance(actual_value_var, tk.StringVar):
+                    actual_value_var = tk.StringVar()
+                    self.patient_data[unique_key] = actual_value_var
+
+                display_var = tk.StringVar()
+
+                label = ttk.Label(row_frame, text=q_label, width=40)
+                label.pack(side="left", padx=5)
+
+                combobox = ttk.Combobox(row_frame, textvariable=display_var, values=display_options, state="readonly", width=37)
+                combobox.pack(side="left", fill="x", expand=True, padx=5)
+
+                def on_select(event, var=actual_value_var, vmap=value_map, d_var=display_var):
+                    actual_value = vmap.get(d_var.get(), "")
+                    var.set(actual_value)
+                
+                combobox.bind("<<ComboboxSelected>>", on_select)
+
+                saved_value = actual_value_var.get()
+                if saved_value:
+                    for text, val in value_map.items():
+                        if val == saved_value:
+                            display_var.set(text)
+                            break
+            
             else: # Standard question (text entry)
                 q_label = question
                 unique_key = (page_index, q_label)
@@ -120,6 +159,25 @@ class FormWizardApp:
                 for conditional_q, data in self.widget_map.get(parent, {}).items():
                     if q_label in data["hides"]:
                         data["widgets_to_hide"].append(row_frame)
+
+                # When an item is selected, update the actual_value_var
+                def on_select(event):
+                    display_text = var.get()
+                    actual_value = value_map.get(display_text, "")
+                    var.set(actual_value)
+                
+                entry.bind("<<ComboboxSelected>>", on_select)
+
+                # Pre-fill if data exists
+                if unique_key in self.patient_data and isinstance(self.patient_data[unique_key], tk.StringVar):
+                    saved_value = self.patient_data[unique_key].get()
+                    if saved_value:
+                        var.set(saved_value)
+                        # Find the corresponding display text for the saved value
+                        for text, val in value_map.items():
+                            if val == saved_value:
+                                var.set(text)
+                                break
 
     def _toggle_visibility(self, question_data, parent, key):
         var = self.patient_data[key]
