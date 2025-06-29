@@ -7,6 +7,8 @@ import os
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill
 from questions_data import FORMS_DATA
+import threading
+import queue
 
 class FormWizardApp:
     def __init__(self, root):
@@ -29,6 +31,7 @@ class FormWizardApp:
         self.pages = {}
         self.widget_map = {}
         self.populated_pages = set()
+        self.submit_queue = queue.Queue()
 
         # Main container for the pages
         self.page_container = tk.Frame(root)
@@ -195,25 +198,6 @@ class FormWizardApp:
                     if q_label in data["hides"]:
                         data["widgets_to_hide"].append(row_frame)
 
-                # When an item is selected, update the actual_value_var
-                def on_select(event):
-                    display_text = var.get()
-                    actual_value = value_map.get(display_text, "")
-                    var.set(actual_value)
-                
-                entry.bind("<<ComboboxSelected>>", on_select)
-
-                # Pre-fill if data exists
-                if unique_key in self.patient_data and isinstance(self.patient_data[unique_key], tk.StringVar):
-                    saved_value = self.patient_data[unique_key].get()
-                    if saved_value:
-                        var.set(saved_value)
-                        # Find the corresponding display text for the saved value
-                        for text, val in value_map.items():
-                            if val == saved_value:
-                                var.set(text)
-                                break
-
     def _toggle_visibility(self, question_data, parent, key):
         var = self.patient_data[key]
         is_visible = var.get() == "Yes"
@@ -297,86 +281,89 @@ class FormWizardApp:
     def prev_page(self):
         self.show_page(self.current_page - 1)
 
-    def _reset_form(self):
-        """Resets the form for a new patient entry."""
-        messagebox.showinfo(
-            "Success",
-            f"Data saved successfully to\n{self.filepath}\n\nThe form has been reset for the next patient."
-        )
-        # Reset state
-        self.current_page = 0
-        self.patient_data = {}
-        self.widget_map = {}
-        self.populated_pages.clear()
-
-        # Destroy all existing page frames' content
-        for page_meta in self.pages.values():
-            for widget in page_meta["frame"].winfo_children():
-                widget.destroy()
-        self.pages = {}
-
-        # Re-create the pages from scratch
-        self._create_pages()
-        self.show_page(0)
-
-    def _find_question_page(self, q_label):
-        for i, form_key in enumerate(self.form_keys):
-            for q in FORMS_DATA[form_key]["questions"]:
-                label = q['label'] if isinstance(q, dict) else q
-                if label == q_label:
-                    return i
-        return -1
-
     def submit(self):
+        """Initiates the data submission process in a background thread."""
+        self.submit_button.config(state="disabled", text="Saving...")
+        self.back_button.config(state="disabled")
+        self.next_button.config(state="disabled")
+
+        # Offload the actual work to a background thread
+        threading.Thread(target=self._submit_worker, daemon=True).start()
+        
+        # Start polling the queue for a result from the worker thread
+        self.root.after(100, self._check_submit_queue)
+
+    def _check_submit_queue(self):
+        """Checks if the background submission task is done and handles the result."""
+        try:
+            result = self.submit_queue.get_nowait()
+            # Re-enable buttons and reset text regardless of outcome
+            self.submit_button.config(text="Submit")
+            self.show_page(self.current_page) # This will correctly set button states
+
+            if result['status'] == 'success':
+                messagebox.showinfo(
+                    "Success",
+                    f"Data saved successfully to\n{result['filepath']}\n\nThe form has been reset for the next patient."
+                )
+                self._reset_form()
+            elif result['status'] == 'error':
+                messagebox.showerror("Error", f"An error occurred while saving:\n{result['error']}")
+
+        except queue.Empty:
+            # If the queue is empty, it means the worker is still busy.
+            # Check again after a short delay.
+            self.root.after(100, self._check_submit_queue)
+
+    def _submit_worker(self):
+        """The actual data processing and file writing task. Runs in a background thread."""
         if not self.filepath:
-            messagebox.showerror("Error", "No file path specified. Please restart the application.")
+            self.submit_queue.put({"status": "error", "error": "No file path specified. Please restart."})
             return
 
-        final_data = {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-        
-        # Pre-process conditional 'No' answers to set the values of hidden fields
-        for i, form_key in enumerate(self.form_keys):
-            form_info = FORMS_DATA[form_key]
-            for question in form_info["questions"]:
-                if isinstance(question, dict) and question.get("type") == "yesno_conditional":
-                    base_label = question['label']
-                    unique_data_key = (i, base_label)
-                    value_var = self.patient_data.get(unique_data_key)
-                    
-                    if value_var and isinstance(value_var, tk.StringVar) and value_var.get() == "No":
-                        fill_value = question.get("fill_value", "N/A")
-                        for hidden_q_label in question['hides']:
-                            hidden_page_index = self._find_question_page(hidden_q_label)
-                            if hidden_page_index != -1:
-                                hidden_key = (hidden_page_index, hidden_q_label)
-                                # Set the value directly in patient_data.
-                                # If the widget exists, its var will be updated. If not, the value is stored for collection.
-                                if hidden_key in self.patient_data and isinstance(self.patient_data[hidden_key], tk.StringVar):
-                                     self.patient_data[hidden_key].set(fill_value)
-                                else:
-                                     self.patient_data[hidden_key] = fill_value
-
-        column_counts = {}
-        for i, form_key in enumerate(self.form_keys):
-            form_info = FORMS_DATA[form_key]
-            for question in form_info["questions"]:
-                base_label = question['label'] if isinstance(question, dict) else question
-                
-                count = column_counts.get(base_label, 0) + 1
-                column_counts[base_label] = count
-                unique_col_name = f"{base_label}_{count}" if count > 1 else base_label
-
-                unique_data_key = (i, base_label)
-                value = self.patient_data.get(unique_data_key)
-
-                if isinstance(value, str):
-                    final_data[unique_col_name] = value
-                elif isinstance(value, tk.StringVar):
-                    final_data[unique_col_name] = value.get()
-                else:
-                    final_data[unique_col_name] = "" # Failsafe
-        
         try:
+            final_data = {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+            
+            # This part is safe to run in a background thread as it only reads from thread-safe tkinter variables
+            for i, form_key in enumerate(self.form_keys):
+                form_info = FORMS_DATA[form_key]
+                for question in form_info["questions"]:
+                    if isinstance(question, dict) and question.get("type") == "yesno_conditional":
+                        base_label = question['label']
+                        unique_data_key = (i, base_label)
+                        value_var = self.patient_data.get(unique_data_key)
+                        
+                        if value_var and isinstance(value_var, tk.StringVar) and value_var.get() == "No":
+                            fill_value = question.get("fill_value", "N/A")
+                            for hidden_q_label in question['hides']:
+                                hidden_page_index = self._find_question_page(hidden_q_label)
+                                if hidden_page_index != -1:
+                                    hidden_key = (hidden_page_index, hidden_q_label)
+                                    if hidden_key in self.patient_data and isinstance(self.patient_data[hidden_key], tk.StringVar):
+                                         self.patient_data[hidden_key].set(fill_value)
+                                    else:
+                                         self.patient_data[hidden_key] = fill_value
+
+            column_counts = {}
+            for i, form_key in enumerate(self.form_keys):
+                form_info = FORMS_DATA[form_key]
+                for question in form_info["questions"]:
+                    base_label = question['label'] if isinstance(question, dict) else question
+                    
+                    count = column_counts.get(base_label, 0) + 1
+                    column_counts[base_label] = count
+                    unique_col_name = f"{base_label}_{count}" if count > 1 else base_label
+
+                    unique_data_key = (i, base_label)
+                    value = self.patient_data.get(unique_data_key)
+
+                    if isinstance(value, str):
+                        final_data[unique_col_name] = value
+                    elif isinstance(value, tk.StringVar):
+                        final_data[unique_col_name] = value.get()
+                    else:
+                        final_data[unique_col_name] = "" # Failsafe
+            
             new_entry_df = pd.DataFrame([final_data])
             
             if os.path.exists(self.filepath):
@@ -443,10 +430,36 @@ class FormWizardApp:
                     adjusted_width = (max_length + 2)
                     worksheet.column_dimensions[column_letter].width = adjusted_width
 
-            self._reset_form()
+            self.submit_queue.put({"status": "success", "filepath": self.filepath})
 
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while saving:\n{e}")
+            self.submit_queue.put({"status": "error", "error": e})
+
+    def _reset_form(self):
+        """Resets the form for a new patient entry. Should only be called from the main thread."""
+        # Reset state
+        self.current_page = 0
+        self.patient_data = {}
+        self.widget_map = {}
+        self.populated_pages.clear()
+
+        # Destroy all existing page frames' content
+        for page_meta in self.pages.values():
+            for widget in page_meta["frame"].winfo_children():
+                widget.destroy()
+        self.pages = {}
+
+        # Re-create the pages from scratch
+        self._create_pages()
+        self.show_page(0)
+
+    def _find_question_page(self, q_label):
+        for i, form_key in enumerate(self.form_keys):
+            for q in FORMS_DATA[form_key]["questions"]:
+                label = q['label'] if isinstance(q, dict) else q
+                if label == q_label:
+                    return i
+        return -1
 
 if __name__ == "__main__":
     root = tk.Tk()
