@@ -199,9 +199,6 @@ class FormWizardApp:
         for form_key in self.form_keys:
             form_info = FORMS_DATA[form_key]
             
-            # Add a separator for clarity in Excel
-            final_data[f"--- {form_info['title']} ---"] = ""
-
             for question in form_info["questions"]:
                 q_label = question["label"] if isinstance(question, dict) else question
                 
@@ -221,10 +218,16 @@ class FormWizardApp:
             # Prepare the final dataframe BEFORE opening the file for writing
             if os.path.exists(filepath):
                 existing_df = pd.read_excel(filepath)
-                # Align columns before concatenating
-                all_cols = existing_df.columns.union(new_entry_df.columns)
-                existing_df = existing_df.reindex(columns=all_cols)
-                new_entry_df = new_entry_df.reindex(columns=all_cols)
+                
+                # Get the order of columns from the existing file and add new ones to the end
+                final_ordered_columns = existing_df.columns.tolist()
+                for col in new_entry_df.columns:
+                    if col not in final_ordered_columns:
+                        final_ordered_columns.append(col)
+
+                # Reindex both dataframes to this final, preserved order
+                existing_df = existing_df.reindex(columns=final_ordered_columns)
+                new_entry_df = new_entry_df.reindex(columns=final_ordered_columns)
                 df_to_save = pd.concat([existing_df, new_entry_df], ignore_index=True)
             else:
                 df_to_save = new_entry_df
@@ -233,20 +236,45 @@ class FormWizardApp:
             with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
                 df_to_save.to_excel(writer, index=False, sheet_name='Responses')
                 
-                # Auto-fit columns and color separators
                 worksheet = writer.sheets['Responses']
-                separator_fill = PatternFill(start_color="E0E0E0", end_color="E0E0E0", fill_type="solid") # Light Grey
+                
+                # Define colors for each form section
+                section_fills = [
+                    PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"), # Light Red
+                    PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"), # Light Green
+                    PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"), # Light Yellow
+                    PatternFill(start_color="B4C6E7", end_color="B4C6E7", fill_type="solid"), # Light Blue
+                    PatternFill(start_color="F2B4D0", end_color="F2B4D0", fill_type="solid"), # Pink
+                    PatternFill(start_color="D9D9F3", end_color="D9D9F3", fill_type="solid"), # Lavender
+                    PatternFill(start_color="FFDAB9", end_color="FFDAB9", fill_type="solid"), # Peach
+                    PatternFill(start_color="E0FFFF", end_color="E0FFFF", fill_type="solid"), # Light Cyan
+                    PatternFill(start_color="F0FFF0", end_color="F0FFF0", fill_type="solid"), # Honeydew
+                    PatternFill(start_color="FFFACD", end_color="FFFACD", fill_type="solid"), # Lemon Chiffon
+                    PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid"), # Light Grey
+                    PatternFill(start_color="BDB76B", end_color="BDB76B", fill_type="solid"), # Dark Khaki
+                    PatternFill(start_color="ADD8E6", end_color="ADD8E6", fill_type="solid")  # Light Blue 2
+                ]
 
+                # Create a map of question -> color
+                column_to_color_map = {}
+                color_index = 0
+                for form_key in self.form_keys:
+                    fill = section_fills[color_index % len(section_fills)]
+                    for q in FORMS_DATA[form_key]["questions"]:
+                        q_label = q["label"] if isinstance(q, dict) else q
+                        column_to_color_map[q_label] = fill
+                    color_index += 1
+
+                # Auto-fit columns and color headers
                 for i, column_name in enumerate(df_to_save.columns):
                     column_letter = get_column_letter(i + 1)
-                    max_length = len(str(column_name))
                     
-                    # Color separator columns
-                    if str(column_name).startswith("---"):
-                        for cell in worksheet[column_letter]:
-                            cell.fill = separator_fill
+                    # Color the header cell
+                    if column_name in column_to_color_map:
+                        worksheet.cell(row=1, column=i + 1).fill = column_to_color_map[column_name]
 
-                    # Find the max length in the column's cells for auto-sizing
+                    # Auto-sizing logic
+                    max_length = len(str(column_name))
                     for cell in worksheet[column_letter]:
                         if cell.row == 1:
                             continue
