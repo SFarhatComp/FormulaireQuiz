@@ -1,0 +1,360 @@
+1 ) The qyestionaire should be separated with multiple forms. However at the end they should all be mapped to one line in excell, and we add a separator for each section 
+
+a) The questions are in this order : 
+
+Patient Code  ,  
+
+First FORM : Medical History 
+
+Blood group
+RH
+Allergies?
+
+Taille
+Poids
+NHYA?
+Angina?
+Syncope?
+Family history?
+
+Congenital Malformation? IF THE ANSWER IS NO , put 0 for all other CONGENITAL. The user should not have to fill it , if the answer is yes , then the user should answer 
+Congenital: APVR?
+Congenital: Coarctaction?
+Congenital: Coronary artery anomalies?
+Congenital: VSD?
+Congenital: ASD?
+Congenital: Subaortic membrane?
+Notes congenital
+Diabetes?
+DLP?
+HTN?
+Obesity?
+COPD?
+Is it a redo?
+Date of last cardiac surgery
+Details if redo
+CAD?
+Unstable angina?
+Previous MI?
+AF?
+PVD?
+Smoking?
+History of rhumatismal disease?
+
+Second FORM : PreOP State Evaluation: 
+
+Creatinine clearance (umol/L)
+CKD?
+Neurological dysfunction?
+Critical state?
+Pulmonary HTN?
+Preop PAP
+Level of emergency (1= elective, 2= emergent, 3=urgent, 4=salvage)
+Preop need for ventilation support?
+KT EF (%)
+KT Systolic pressure (mm Hg)
+KT Diastolic pressure (mm Hg)
+Preop cardiac rythm
+Other comorbidities
+
+Third FORM : Valve Lesion 
+
+Aortic stenosis?
+Aortic regurgitation?
+Mixed stenosis/regurgitation?
+If mixed, predominance? (1=AR, 2=AS, 3=Balanced)
+Endocarditis?
+Status of endocarditis? (1=Active, 2=Recently cured, 3=Past)
+Ascending aorta aneuvrysm?
+Aortic root aneuvrysm?
+Rhumatic disease?
+Other related to valve lesion
+
+Fourth FORM : Pre op Echo
+
+Date of preop echo (YYYY-MM-DD)
+BSA
+Preop EF
+LV mass (g)
+Diastolic LV diameter (mm)
+Systolic LV diameter (mm)
+IVS (mm)
+LVPFW (mm)
+Mean AV gradient (mm Hg)
+Max AV gradient (mm Hg)
+AVA
+Index AVA
+Max velocity (m/s)
+AR level
+PR level
+Pulmonary peak gradient max (mm Hg)
+Pulmonary gradient mean (mm Hg)
+Annulus aorta (mm)
+Valsalva sinus (mm)
+Ascending aorta (mm)
+ST junction (mm)
+MR level
+TR level
+Mitral gradient (mm Hg)
+Associated lesion
+
+
+Fifth FORM : Operative Data
+
+CPB time (min)
+Clamp time (min)
+Reprfusion time (min)
+Circulatory arrest time (min)
+Time of circulatory arrest
+Cardioplegia type (1=antegrade, 2=retrograde, 3=both)
+Del Nido cardioplegia?
+Temperature (celsius)
+Surgery duration (min)
+Other
+Intraoperative death?
+Surgery approach (1= full sternotomy, 2= upper hemisternotomy, 3= right-anterior minithoracotomy)
+Surgical graft model
+Surgical graft size (mm)
+AV morphology (1=uni, 2-bi, 3=tri, 4=quadri, 5= prosthesis)
+Bicuspid phenotype (1=R-L, 2=R-N)
+Sievers classification
+Isolated AVR?
+Associated procedures?
+Number of associated procedures?
+Ascending aorta replacement?
+Ascending aorta replacement size
+Hemiarch replacement?
+Hemiarch replacement size
+MV repair?
+CABG?
+TV repair?
+Other associated procedures
+
+
+Sixth Form : PostUp Early Outcomes
+
+ICU stay (days)
+Date of discharge
+LOS (days)
+Creatinine max (umol/L)
+CVVH?
+Reintervention needed for bleeding?
+Transfusion?
+PRBC qty
+Platelets qty
+Cryo
+FFP qty
+Intubation duration (1= less than 24h, 2= 24 to48h, 3= more than 48h)
+Reintubation?
+Delirium?
+Stroke?
+TIA?
+OAP?
+Low output?
+CKMB value ug/L
+PMP
+FA or flutter?
+MI?
+Mediastinitis?
+DSW infection?
+Pulmonary infection?
+Beta blocker?
+Losartan?
+ACEI?
+CCB?
+Naproxen?
+Other Rx?
+Other complications
+Death?
+Date of death
+STS death classification (1=. valve-related, 2= sudden/unexplained, 3= cardiac, 4= other)
+Cause of death
+
+Seventh Form: PostOP Echo 1
+
+Date of postop echo
+BSA
+LVSD (mm)
+LVDD (mm)
+Ejection fraction (%)
+LV mass indexed (g/m2)
+LVPFW (mm)
+IVS (mm)
+Mean AV gradient (mm Hg)
+Max AV gradient (mm Hg)
+AVA (cm2)
+AVA index
+iAVA (cm2/m2)
+Max velocity (m/s)
+AR (0, 0.5, 1, 2, 3, 4)
+MR (0, 0.5, 1, 2, 3, 4)
+TR (0, 0.5, 1, 2, 3, 4)
+PR (0, 0.5, 1, 2, 3, 4)
+Pulmonary peak gradient (mm Hg)
+Pulmonary mean gradient (mm Hg)
+Anneau (mm)
+Valsalva (mm)
+ST junction (mm)
+Ascending aorta (mm)
+
+Eigth FORM : PostOp MRI 
+
+Postop MRI? If this answer is no, we skip everything that is MRI related. Which means the value in the excell sheet should be N/A, the user shouldnt have to answer those questions. 
+Date of MRI
+LV ejection fraction (%)
+LV telediastolic volume (mL)
+LV telesystolic volume (mL)
+LV mass (g)
+RV ejection fraction (%)
+RV telediastolic volume (mL)
+RV telesystolic volume (mL)
+AV regurgitation fraction (%)
+PV regurgitation fraction (%)
+Aortic annulus (mm)
+Valsalva sinus (mm)
+ST junction (mm)
+Tubular aorta (mm)
+Postop MRI notes
+
+Ninth Form : Follow Up Echo 1 
+
+** ASK A QUESTION FIRST THAT WILL NOT GO INTO THE DATA.  THE QUESTION WILL BE HAS HE DONE A FOLLOW UP ECHO ? IF THE ANSWER IS NO , GO TO THE NEXT SECTION. PUT N/A FOR ALL THE REST TAHT IS REALTED TO THAT FOLLOW UP ECHO. IF THE ANSWER IS YES THEN THE USER PROCEEDS WITH THE QUESTIONS**
+
+Date of follow up echo
+BSA
+LVSD (mm)
+LVDD (mm)
+Ejection fraction (%)
+LV mass indexed (g/m2)
+LVPFW (mm)
+IVS (mm)
+Mean AV gradient (mm Hg)
+Max AV gradient (mm Hg)
+AVA (cm2)
+AVA index
+Max velocity (m/s)
+AR (0, 0.5, 1, 2, 3, 4)
+MR (0, 0.5, 1, 2, 3, 4)
+TR (0, 0.5, 1, 2, 3, 4)
+Pulmonary peak gradient (mm Hg)
+PR (0, 0.5, 1, 2, 3, 4)
+Pulmonary mean gradient (mm Hg)
+Anneau (mm)
+Valsalva (mm)
+ST junction (mm)
+Ascending aorta (mm)
+
+TENTH Form : Follow Up Echo 2 
+
+** ASK A QUESTION FIRST THAT WILL NOT GO INTO THE DATA.  THE QUESTION WILL BE HAS HE DONE A FOLLOW UP ECHO ? IF THE ANSWER IS NO , GO TO THE NEXT SECTION. PUT N/A FOR ALL THE REST TAHT IS REALTED TO THAT FOLLOW UP ECHO. IF THE ANSWER IS YES THEN THE USER PROCEEDS WITH THE QUESTIONS**
+
+Date of follow up echo
+BSA
+LVSD (mm)
+LVDD (mm)
+Ejection fraction (%)
+LV mass indexed (g/m2)
+LVPFW (mm)
+IVS (mm)
+Mean AV gradient (mm Hg)
+Max AV gradient (mm Hg)
+AVA (cm2)
+AVA index
+Max velocity (m/s)
+AR (0, 0.5, 1, 2, 3, 4)
+MR (0, 0.5, 1, 2, 3, 4)
+TR (0, 0.5, 1, 2, 3, 4)
+Pulmonary peak gradient (mm Hg)
+PR (0, 0.5, 1, 2, 3, 4)
+Pulmonary mean gradient (mm Hg)
+Anneau (mm)
+Valsalva (mm)
+ST junction (mm)
+Ascending aorta (mm)
+
+ELEVENTH Form : Follow Up Echo 3 
+
+** ASK A QUESTION FIRST THAT WILL NOT GO INTO THE DATA.  THE QUESTION WILL BE HAS HE DONE A FOLLOW UP ECHO ? IF THE ANSWER IS NO , GO TO THE NEXT SECTION. PUT N/A FOR ALL THE REST TAHT IS REALTED TO THAT FOLLOW UP ECHO. IF THE ANSWER IS YES THEN THE USER PROCEEDS WITH THE QUESTIONS**
+
+Date of follow up echo
+BSA
+LVSD (mm)
+LVDD (mm)
+Ejection fraction (%)
+LV mass indexed (g/m2)
+LVPFW (mm)
+IVS (mm)
+Mean AV gradient (mm Hg)
+Max AV gradient (mm Hg)
+AVA (cm2)
+AVA index
+Max velocity (m/s)
+AR (0, 0.5, 1, 2, 3, 4)
+MR (0, 0.5, 1, 2, 3, 4)
+TR (0, 0.5, 1, 2, 3, 4)
+Pulmonary peak gradient (mm Hg)
+PR (0, 0.5, 1, 2, 3, 4)
+Pulmonary mean gradient (mm Hg)
+Anneau (mm)
+Valsalva (mm)
+ST junction (mm)
+Ascending aorta (mm)
+
+TWELVETH FORM : POST OP CLINICAL FOLLOW UP DATA ( USUALLY 3 MONTHS )
+Follow up date
+NYHA (1, 2, 3, 4)
+Complications?
+TIA?
+Stroke?
+Systemic embolism?
+Date of embolism
+MI?
+Date of MI
+Rehospitalisation for heart failure?
+Bleeding
+Description of bleeding
+Date of bleeding
+Endocarditis
+Date of endocarditis
+Arrythmia: AF?
+Arrythmia: AVB?
+Arrythmia: PMP?
+Arrythmia: Other?
+Arrythmia: None?
+Date of arrythmia
+Reintervention needed?
+Cause of reintervention
+Date of reintervention
+Death?
+STS classification of death (1=valve-related, 2=sudden/unexplained, 3=cardiac, 4=other)
+Date of death
+
+TIRTHEENTH FORM : LATEST CLINICAL DATA 
+
+Latest clinical data DATE
+NYHA (1, 2, 3, 4)
+Complications?
+TIA?
+Stroke?
+Systemic embolism?
+Date of embolism
+MI?
+Date of MI
+Rehospitalisation for heart failure?
+Bleeding
+Description of bleeding
+Date of bleeding
+Endocarditis
+Date of endocarditis
+Arrythmia: AF?
+Arrythmia: AVB?
+Arrythmia: PMP?
+Arrythmia: Other?
+Arrythmia: None?
+Date of arrythmia
+Reintervention needed?
+Cause of reintervention
+Date of reintervention
+Death?
+STS classification of death (1=valve-related, 2=sudden/unexplained, 3=cardiac, 4=other)
+Date of death
