@@ -55,6 +55,9 @@ class FormWizardApp:
             
             self._populate_page(scrollable_frame, form_data["questions"])
 
+            # Add some bottom padding to prevent the last widget from being cut off
+            ttk.Frame(scrollable_frame, height=20).pack()
+
     def _populate_page(self, parent, questions):
         self.widget_map[parent] = {}
         for question in questions:
@@ -195,18 +198,35 @@ class FormWizardApp:
 
         try:
             new_entry_df = pd.DataFrame([final_data])
-            
-            if os.path.exists(filepath):
-                existing_df = pd.read_excel(filepath)
-                # Align columns and concatenate
-                all_cols = existing_df.columns.union(new_entry_df.columns)
-                existing_df = existing_df.reindex(columns=all_cols)
-                new_entry_df = new_entry_df.reindex(columns=all_cols)
-                df = pd.concat([existing_df, new_entry_df], ignore_index=True)
-            else:
-                df = new_entry_df
 
-            df.to_excel(filepath, index=False)
+            # Use ExcelWriter to gain access to the worksheet and adjust column widths
+            with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+                if os.path.exists(filepath):
+                    existing_df = pd.read_excel(filepath)
+                    # Align columns before concatenating
+                    all_cols = existing_df.columns.union(new_entry_df.columns)
+                    existing_df = existing_df.reindex(columns=all_cols)
+                    new_entry_df = new_entry_df.reindex(columns=all_cols)
+                    df = pd.concat([existing_df, new_entry_df], ignore_index=True)
+                else:
+                    df = new_entry_df
+                
+                df.to_excel(writer, index=False, sheet_name='Responses')
+                
+                # Auto-fit columns
+                worksheet = writer.sheets['Responses']
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = (max_length + 2)
+                    worksheet.column_dimensions[column_letter].width = adjusted_width
+
             messagebox.showinfo("Success", f"Data saved successfully to\n{filepath}")
             self.root.destroy()
 
