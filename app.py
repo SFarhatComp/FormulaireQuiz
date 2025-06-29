@@ -13,6 +13,15 @@ class FormWizardApp:
         self.root = root
         self.root.title("Medical History Form")
         self.root.geometry("800x700")
+        self.filepath = None
+
+        # This method will prompt the user and set self.filepath
+        self._setup_filepath_on_startup()
+
+        # If user cancels file selection, close the app
+        if not self.filepath:
+            self.root.destroy()
+            return
 
         self.form_keys = list(FORMS_DATA.keys())
         self.current_page = 0
@@ -29,6 +38,32 @@ class FormWizardApp:
         self._create_pages()
         self._create_navigation()
         self.show_page(0)
+
+    def _setup_filepath_on_startup(self):
+        # Simple dialog, as a full custom Toplevel can be complex to manage state
+        answer = messagebox.askquestion(
+            "Setup Response File",
+            "Do you want to open an existing response file?\n\n"
+            "(Choose 'Yes' to append to an existing file, 'No' to create a new one.)",
+            icon='question',
+            type='yesnocancel'
+        )
+
+        if answer == 'yes':
+            self.filepath = filedialog.askopenfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx")],
+                title="Open Existing Response File"
+            )
+        elif answer == 'no':
+            self.filepath = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                title="Create New Response File",
+                initialfile="patient_responses.xlsx"
+            )
+        else: # 'cancel' or window closed
+            self.filepath = None
 
     def _bind_scroll(self, widget, canvas):
         """Binds mouse scroll events to a widget to scroll a canvas."""
@@ -247,6 +282,27 @@ class FormWizardApp:
     def prev_page(self):
         self.show_page(self.current_page - 1)
 
+    def _reset_form(self):
+        """Resets the form for a new patient entry."""
+        messagebox.showinfo(
+            "Success",
+            f"Data saved successfully to\n{self.filepath}\n\nThe form has been reset for the next patient."
+        )
+        # Reset state
+        self.current_page = 0
+        self.patient_data = {}
+        self.widget_map = {}
+
+        # Destroy all existing page frames' content
+        for page in self.pages.values():
+            for widget in page.winfo_children():
+                widget.destroy()
+        self.pages = {}
+
+        # Re-create the pages from scratch
+        self._create_pages()
+        self.show_page(0)
+
     def _find_question_page(self, q_label):
         for i, form_key in enumerate(self.form_keys):
             for q in FORMS_DATA[form_key]["questions"]:
@@ -256,13 +312,8 @@ class FormWizardApp:
         return -1
 
     def submit(self):
-        filepath = filedialog.asksaveasfilename(
-            defaultextension=".xlsx",
-            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
-            title="Save Response",
-            initialfile="patient_response.xlsx",
-        )
-        if not filepath:
+        if not self.filepath:
+            messagebox.showerror("Error", "No file path specified. Please restart the application.")
             return
 
         final_data = {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
@@ -312,8 +363,8 @@ class FormWizardApp:
         try:
             new_entry_df = pd.DataFrame([final_data])
             
-            if os.path.exists(filepath):
-                existing_df = pd.read_excel(filepath)
+            if os.path.exists(self.filepath):
+                existing_df = pd.read_excel(self.filepath)
                 
                 final_ordered_columns = existing_df.columns.tolist()
                 for col in new_entry_df.columns:
@@ -326,7 +377,7 @@ class FormWizardApp:
             else:
                 df_to_save = new_entry_df
 
-            with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+            with pd.ExcelWriter(self.filepath, engine='openpyxl') as writer:
                 df_to_save.to_excel(writer, index=False, sheet_name='Responses')
                 
                 worksheet = writer.sheets['Responses']
@@ -376,8 +427,7 @@ class FormWizardApp:
                     adjusted_width = (max_length + 2)
                     worksheet.column_dimensions[column_letter].width = adjusted_width
 
-            messagebox.showinfo("Success", f"Data saved successfully to\n{filepath}")
-            self.root.destroy()
+            self._reset_form()
 
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while saving:\n{e}")
