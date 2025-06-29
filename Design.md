@@ -1,52 +1,54 @@
-# Project Design: Dynamic Form Application
+# Project Design: Multi-Page Medical Questionnaire
 
-This document outlines the design for a local, offline form application built with Python and `tkinter`. The application allows for dynamic form creation and saves responses directly to a user-specified Excel file.
+This document outlines the design for a multi-page, offline-first medical questionnaire application built with Python and `tkinter`. The application guides the user through a series of forms, implements conditional logic, and saves the complete patient record into a single row in an Excel file.
 
 ---
 
-## 1. Core Functionality
+## 1. Core Architecture: The Form Wizard
 
--   **GUI Form:** A simple, clean graphical user interface built with `tkinter`.
--   **Offline Data-Entry:** The application works completely offline, requiring no internet connection.
--   **Excel Integration:** Saves all submitted responses into a single `.xlsx` file using the `pandas` and `openpyxl` libraries.
+The application is architected as a "wizard," presenting the user with a sequence of 13 forms. This structure ensures that data is collected in a logical and orderly manner.
+
+-   **Multi-Page Interface:** The UI is managed in a single window with a content area that displays one form at a time.
+-   **Sequential Navigation:** "Next" and "Back" buttons allow the user to move between the different sections of the questionnaire.
+-   **Centralized Data Store:** A single data object holds the user's responses in memory as they navigate through the forms, ensuring data integrity until final submission.
 
 ## 2. Key Features
 
--   **Flexible File Handling:**
-    -   On startup, the user is prompted to either **create a new response file** or **open an existing one**.
-    -   **Open Existing File:** If an existing `.xlsx` file is opened, the application reads its column headers to dynamically reconstruct the form, allowing the user to seamlessly continue a previous session.
-    -   **Create New File:** If creating a new file, a native file dialog allows the user to select a save location and filename.
-    -   The chosen filename is displayed in the application's title bar.
+-   **Structured Form Definitions:**
+    -   The entire 13-form structure, including all questions and conditional rules, is defined in a dedicated `questions_data.py` file. This separates the form data from the application's view logic.
 
--   **Dynamic Question Management:**
-    -   The application starts with a default set of questions if creating a new file.
-    -   **Add Question:** A dedicated button allows the user to add new questions to the form at runtime.
-    -   **Remove Question:** A button allows the user to select and remove one or more questions from the form via a multi-select dialog.
-    -   The form layout dynamically adjusts as questions are added or removed.
+-   **Dynamic Form Rendering:**
+    -   Each form page is generated dynamically from the `questions_data.py` structure.
+    -   Long forms are equipped with a scrollbar to ensure all fields are accessible.
 
--   **Data Submission:**
-    -   A "Submit" button collects all data from the input fields.
-    -   Each submission is saved as a new row in the selected Excel file.
-    -   A timestamp is automatically added to each entry to record when it was submitted.
+-   **Advanced Conditional Logic:**
+    -   **Field-level conditions:** Answering "No" to specific questions (e.g., "Congenital Malformation?", "Postop MRI?") automatically hides irrelevant sub-questions from the UI.
+    -   **Form-level conditions:** For certain sections (e.g., "Follow Up Echo 1, 2, 3"), the application first asks if the event occurred. If the answer is "No," the entire form is skipped.
+
+-   **Intelligent Data Export:**
+    -   Upon pressing "Submit" on the final page, the user is prompted to choose a save location for the Excel file.
+    -   All collected data from the 13 forms is consolidated into a single row.
+    -   Skipped fields or forms are automatically populated with `"0"` or `"N/A"` as specified in the rules, ensuring a complete and consistently structured data set.
+    -   Form sections are demarcated in the Excel file with separator columns (e.g., `--- Medical History ---`) for enhanced readability.
 
 ## 3. Technical Implementation
 
 -   **Language:** Python 3
--   **GUI Library:** `tkinter` (standard library, but may require separate installation on some OSes).
--   **Data Handling:** `pandas` for creating and appending data to the Excel file.
--   **Containerization:** A `Dockerfile` is provided to run the application in an isolated container, ensuring consistent behavior across different environments.
--   **Executable Bundling:** The project is configured to be bundled into a single standalone executable using `PyInstaller`, making it easy to distribute to non-technical users.
+-   **GUI Library:** `tkinter` (using the modern `ttk` themed widgets).
+-   **Data Handling:** `pandas` for creating and appending data to the `.xlsx` file.
+-   **Containerization & Distribution:** The existing `Dockerfile` and `PyInstaller` configurations remain valid for containerizing and creating standalone executables of this new version.
 
 ## 4. File Structure
 
 ```
 .
-├── app.py          # Main Python application script
-├── requirements.txt# Python dependencies
-├── Dockerfile      # Containerization instructions
-├── README.md       # User-facing documentation
-├── .gitignore      # Specifies files for Git to ignore
-└── responses.xlsx  # Example output file (auto-created)
+├── app.py                  # Main Python application script (wizard logic)
+├── questions_data.py       # Defines the structure of all 13 forms
+├── requirements.txt        # Python dependencies
+├── Dockerfile              # Containerization instructions
+├── README.md               # User-facing documentation
+├── .gitignore              # Specifies files for Git to ignore
+└── Custom.txt              # The source text for the questionnaire
 ```
 
 
