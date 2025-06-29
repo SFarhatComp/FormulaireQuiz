@@ -139,7 +139,12 @@ FORMS_DATA = {
     "FORM_7": {
         "title": "PostOP Echo 1",
         "questions": [
-            "Date of postop echo", "BSA", "LVSD (mm)", "LVDD (mm)", "Ejection fraction (%)", "LV mass indexed (g/m2)", "LVPFW (mm)", "IVS (mm)", "Mean AV gradient (mm Hg)", "Max AV gradient (mm Hg)", "AVA (cm2)", "AVA index", "iAVA (cm2/m2)", "Max velocity (m/s)", "AR (0, 0.5, 1, 2, 3, 4)", "MR (0, 0.5, 1, 2, 3, 4)", "TR (0, 0.5, 1, 2, 3, 4)", "PR (0, 0.5, 1, 2, 3, 4)", "Pulmonary peak gradient (mm Hg)", "Pulmonary mean gradient (mm Hg)", "Anneau (mm)", "Valsalva (mm)", "ST junction (mm)", "Ascending aorta (mm)"
+            "Date of postop echo", "BSA", "LVSD (mm)", "LVDD (mm)", "Ejection fraction (%)", "LV mass indexed (g/m2)", "LVPFW (mm)", "IVS (mm)", "Mean AV gradient (mm Hg)", "Max AV gradient (mm Hg)", "AVA (cm2)", "AVA index", "iAVA (cm2/m2)", "Max velocity (m/s)",
+            {"label": "AR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "MR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "TR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "PR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            "Pulmonary peak gradient (mm Hg)", "Pulmonary mean gradient (mm Hg)", "Anneau (mm)", "Valsalva (mm)", "ST junction (mm)", "Ascending aorta (mm)"
         ]
     },
     "FORM_8": {
@@ -161,7 +166,13 @@ FORMS_DATA = {
         "preliminary_question": "Has he done a Follow Up Echo 1?",
         "fill_value": "N/A",
         "questions": [
-            "Date of follow up echo", "BSA", "LVSD (mm)", "LVDD (mm)", "Ejection fraction (%)", "LV mass indexed (g/m2)", "LVPFW (mm)", "IVS (mm)", "Mean AV gradient (mm Hg)", "Max AV gradient (mm Hg)", "AVA (cm2)", "AVA index", "Max velocity (m/s)", "AR (0, 0.5, 1, 2, 3, 4)", "MR (0, 0.5, 1, 2, 3, 4)", "TR (0, 0.5, 1, 2, 3, 4)", "Pulmonary peak gradient (mm Hg)", "PR (0, 0.5, 1, 2, 3, 4)", "Pulmonary mean gradient (mm Hg)", "Anneau (mm)", "Valsalva (mm)", "ST junction (mm)", "Ascending aorta (mm)"
+            "Date of follow up echo", "BSA", "LVSD (mm)", "LVDD (mm)", "Ejection fraction (%)", "LV mass indexed (g/m2)", "LVPFW (mm)", "IVS (mm)", "Mean AV gradient (mm Hg)", "Max AV gradient (mm Hg)", "AVA (cm2)", "AVA index", "Max velocity (m/s)",
+            {"label": "AR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "MR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "TR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            "Pulmonary peak gradient (mm Hg)",
+            {"label": "PR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            "Pulmonary mean gradient (mm Hg)", "Anneau (mm)", "Valsalva (mm)", "ST junction (mm)", "Ascending aorta (mm)"
         ]
     },
     "FORM_10": {
@@ -169,7 +180,13 @@ FORMS_DATA = {
         "preliminary_question": "Has he done a Follow Up Echo 2?",
         "fill_value": "N/A",
         "questions": [
-            "Date of follow up echo", "BSA", "LVSD (mm)", "LVDD (mm)", "Ejection fraction (%)", "LV mass indexed (g/m2)", "LVPFW (mm)", "IVS (mm)", "Mean AV gradient (mm Hg)", "Max AV gradient (mm Hg)", "AVA (cm2)", "AVA index", "Max velocity (m/s)", "AR (0, 0.5, 1, 2, 3, 4)", "MR (0, 0.5, 1, 2, 3, 4)", "TR (0, 0.5, 1, 2, 3, 4)", "Pulmonary peak gradient (mm Hg)", "PR (0, 0.5, 1, 2, 3, 4)", "Pulmonary mean gradient (mm Hg)", "Anneau (mm)", "Valsalva (mm)", "ST junction (mm)", "Ascending aorta (mm)"
+            "Date of follow up echo", "BSA", "LVSD (mm)", "LVDD (mm)", "Ejection fraction (%)", "LV mass indexed (g/m2)", "LVPFW (mm)", "IVS (mm)", "Mean AV gradient (mm Hg)", "Max AV gradient (mm Hg)", "AVA (cm2)", "AVA index", "Max velocity (m/s)",
+            {"label": "AR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "MR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "TR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            "Pulmonary peak gradient (mm Hg)",
+            {"label": "PR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            "Pulmonary mean gradient (mm Hg)", "Anneau (mm)", "Valsalva (mm)", "ST junction (mm)", "Ascending aorta (mm)"
         ]
     },
     "FORM_11": {
@@ -177,13 +194,20 @@ FORMS_DATA = {
         "preliminary_question": "Has he done a Follow Up Echo 3?",
         "fill_value": "N/A",
         "questions": [
-            "Date of follow up echo", "BSA", "LVSD (mm)", "LVDD (mm)", "Ejection fraction (%)", "LV mass indexed (g/m2)", "LVPFW (mm)", "IVS (mm)", "Mean AV gradient (mm Hg)", "Max AV gradient (mm Hg)", "AVA (cm2)", "AVA index", "Max velocity (m/s)", "AR (0, 0.5, 1, 2, 3, 4)", "MR (0, 0.5, 1, 2, 3, 4)", "TR (0, 0.5, 1, 2, 3, 4)", "Pulmonary peak gradient (mm Hg)", "PR (0, 0.5, 1, 2, 3, 4)", "Pulmonary mean gradient (mm Hg)", "Anneau (mm)", "Valsalva (mm)", "ST junction (mm)", "Ascending aorta (mm)"
+            "Date of follow up echo", "BSA", "LVSD (mm)", "LVDD (mm)", "Ejection fraction (%)", "LV mass indexed (g/m2)", "LVPFW (mm)", "IVS (mm)", "Mean AV gradient (mm Hg)", "Max AV gradient (mm Hg)", "AVA (cm2)", "AVA index", "Max velocity (m/s)",
+            {"label": "AR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "MR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            {"label": "TR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            "Pulmonary peak gradient (mm Hg)",
+            {"label": "PR", "type": "dropdown", "options": ["0", "0.5", "1", "2", "3", "4"]},
+            "Pulmonary mean gradient (mm Hg)", "Anneau (mm)", "Valsalva (mm)", "ST junction (mm)", "Ascending aorta (mm)"
         ]
     },
     "FORM_12": {
         "title": "Post OP Clinical Follow Up Data (3 months)",
         "questions": [
-            "Follow up date", "NYHA (1, 2, 3, 4)",
+            "Follow up date",
+            {"label": "NYHA", "type": "dropdown", "options": ["1", "2", "3", "4"]},
             {"label": "Complications?", "type": "yesno"},
             {"label": "TIA?", "type": "yesno"},
             {"label": "Stroke?", "type": "yesno"},
@@ -212,7 +236,8 @@ FORMS_DATA = {
     "FORM_13": {
         "title": "Latest Clinical Data",
         "questions": [
-            "Latest clinical data DATE", "NYHA (1, 2, 3, 4)",
+            "Latest clinical data DATE",
+            {"label": "NYHA", "type": "dropdown", "options": ["1", "2", "3", "4"]},
             {"label": "Complications?", "type": "yesno"},
             {"label": "TIA?", "type": "yesno"},
             {"label": "Stroke?", "type": "yesno"},

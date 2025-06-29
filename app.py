@@ -83,29 +83,7 @@ class FormWizardApp:
             row_frame = tk.Frame(parent)
             row_frame.pack(fill="x", pady=2)
             
-            if isinstance(question, dict): # All dict-based questions are Yes/No
-                q_label = question["label"]
-                unique_key = (page_index, q_label)
-                var = tk.StringVar(value="No")
-                self.patient_data[unique_key] = var
-                
-                label = ttk.Label(row_frame, text=q_label, width=40)
-                label.pack(side="left", padx=5)
-
-                yes_rb = ttk.Radiobutton(row_frame, text="Yes", variable=var, value="Yes")
-                no_rb = ttk.Radiobutton(row_frame, text="No", variable=var, value="No")
-                yes_rb.pack(side="left")
-                no_rb.pack(side="left")
-                
-                # If it's a conditional question, set up the hiding logic
-                if question.get("type") == "yesno_conditional":
-                    self.widget_map[parent][q_label] = {
-                        "hides": question["hides"],
-                        "widgets_to_hide": []
-                    }
-                    var.trace_add("write", lambda *args, q=question, p=parent, key=unique_key: self._toggle_visibility(q, p, key))
-
-            elif isinstance(question, dict) and question.get("type") == "dropdown":
+            if isinstance(question, dict) and question.get("type") == "dropdown":
                 q_label = question["label"]
                 unique_key = (page_index, q_label)
 
@@ -117,7 +95,6 @@ class FormWizardApp:
                     display_options.append(display_text)
                     value_map[display_text] = value
 
-                # This var holds the actual value (e.g., '1')
                 actual_value_var = self.patient_data.get(unique_key)
                 if not isinstance(actual_value_var, tk.StringVar):
                     actual_value_var = tk.StringVar()
@@ -144,6 +121,32 @@ class FormWizardApp:
                             display_var.set(text)
                             break
             
+            elif isinstance(question, dict): # Catches 'yesno' and 'yesno_conditional'
+                q_label = question["label"]
+                unique_key = (page_index, q_label)
+                var = tk.StringVar(value="No")
+                
+                # Use existing var if it's there (from loading data)
+                if unique_key in self.patient_data and isinstance(self.patient_data.get(unique_key), tk.StringVar):
+                    var = self.patient_data[unique_key]
+                else:
+                    self.patient_data[unique_key] = var
+
+                label = ttk.Label(row_frame, text=q_label, width=40)
+                label.pack(side="left", padx=5)
+
+                yes_rb = ttk.Radiobutton(row_frame, text="Yes", variable=var, value="Yes")
+                no_rb = ttk.Radiobutton(row_frame, text="No", variable=var, value="No")
+                yes_rb.pack(side="left")
+                no_rb.pack(side="left")
+                
+                if question.get("type") == "yesno_conditional":
+                    self.widget_map[parent][q_label] = {
+                        "hides": question["hides"], 
+                        "widgets_to_hide": []
+                    }
+                    var.trace_add("write", lambda *args, q=question, p=parent, key=unique_key: self._toggle_visibility(q, p, key))
+
             else: # Standard question (text entry)
                 q_label = question
                 unique_key = (page_index, q_label)
@@ -277,14 +280,15 @@ class FormWizardApp:
                     final_data[unique_col_name] = "Yes" if is_yes else "No"
 
                     if not is_yes and question.get("type") == "yesno_conditional":
-                        # If 'No' on a conditional question, fill the hidden fields
                         fill_value = question.get("fill_value", "N/A")
                         for hidden_q_label in question['hides']:
-                            # Also generate unique names for these hidden questions
-                            h_count = column_counts.get(hidden_q_label, 0) + 1
-                            column_counts[hidden_q_label] = h_count
-                            h_unique_name = f"{hidden_q_label}_{h_count}" if h_count > 1 else hidden_q_label
-                            final_data[h_unique_name] = fill_value
+                            hidden_page_index = self._find_question_page(hidden_q_label)
+                            hidden_key = (hidden_page_index, hidden_q_label)
+                            hidden_unique_name = self._generate_unique_column_name(final_data, hidden_q_label)
+                            final_data[hidden_unique_name] = fill_value
+                            # Ensure the var is also updated for consistency
+                            if hidden_key in self.patient_data:
+                                self.patient_data[hidden_key].set(fill_value)
                 
                 else: # Standard or skipped question
                     if isinstance(value, tk.StringVar):
