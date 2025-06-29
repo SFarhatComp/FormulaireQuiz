@@ -28,6 +28,20 @@ class FormWizardApp:
         self._create_navigation()
         self.show_page(0)
 
+    def _bind_scroll(self, widget, canvas):
+        """Binds mouse scroll events to a widget to scroll a canvas."""
+        # For Windows/macOS
+        widget.bind("<MouseWheel>", lambda e, c=canvas: c.yview_scroll(int(-1 * (e.delta / 120)), "units"))
+        # For Linux
+        widget.bind("<Button-4>", lambda e, c=canvas: c.yview_scroll(-1, "units"))
+        widget.bind("<Button-5>", lambda e, c=canvas: c.yview_scroll(1, "units"))
+
+    def _bind_recursive(self, widget, canvas):
+        """Binds mouse scroll events recursively to a widget and all its children."""
+        self._bind_scroll(widget, canvas)
+        for child in widget.winfo_children():
+            self._bind_recursive(child, canvas)
+
     def _create_pages(self):
         for i, form_key in enumerate(self.form_keys):
             form_data = FORMS_DATA[form_key]
@@ -54,9 +68,12 @@ class FormWizardApp:
             scrollbar.pack(side="right", fill="y")
             
             self._populate_page(scrollable_frame, form_data["questions"])
+            self._bind_recursive(scrollable_frame, canvas)
 
             # Add some bottom padding to prevent the last widget from being cut off
-            ttk.Frame(scrollable_frame, height=20).pack()
+            padding_frame = ttk.Frame(scrollable_frame, height=20)
+            padding_frame.pack()
+            self._bind_scroll(padding_frame, canvas)
 
     def _populate_page(self, parent, questions):
         self.widget_map[parent] = {}
