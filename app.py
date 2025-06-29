@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 import os
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import PatternFill
 from questions_data import FORMS_DATA
 
 class FormWizardApp:
@@ -232,15 +233,22 @@ class FormWizardApp:
             with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
                 df_to_save.to_excel(writer, index=False, sheet_name='Responses')
                 
-                # Auto-fit columns, considering header length
+                # Auto-fit columns and color separators
                 worksheet = writer.sheets['Responses']
+                separator_fill = PatternFill(start_color="E0E0E0", end_color="E0E0E0", fill_type="solid") # Light Grey
+
                 for i, column_name in enumerate(df_to_save.columns):
                     column_letter = get_column_letter(i + 1)
-                    max_length = len(str(column_name))  # Check header length first
+                    max_length = len(str(column_name))
                     
-                    # Find the max length in the column's cells
+                    # Color separator columns
+                    if str(column_name).startswith("---"):
+                        for cell in worksheet[column_letter]:
+                            cell.fill = separator_fill
+
+                    # Find the max length in the column's cells for auto-sizing
                     for cell in worksheet[column_letter]:
-                        if cell.row == 1: # Already checked header
+                        if cell.row == 1:
                             continue
                         try:
                             if len(str(cell.value)) > max_length:
