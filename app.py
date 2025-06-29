@@ -246,6 +246,14 @@ class FormWizardApp:
     def prev_page(self):
         self.show_page(self.current_page - 1)
 
+    def _find_question_page(self, q_label):
+        for i, form_key in enumerate(self.form_keys):
+            for q in FORMS_DATA[form_key]["questions"]:
+                label = q['label'] if isinstance(q, dict) else q
+                if label == q_label:
+                    return i
+        return -1
+
     def submit(self):
         filepath = filedialog.asksaveasfilename(
             defaultextension=".xlsx",
@@ -257,91 +265,87 @@ class FormWizardApp:
             return
 
         final_data = {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-        column_counts = {}
-
-        # First pass: collect all data with unique keys
+        
+        # Pre-process conditional 'No' answers to set the values of hidden fields
         for i, form_key in enumerate(self.form_keys):
             form_info = FORMS_DATA[form_key]
-            
+            for question in form_info["questions"]:
+                if isinstance(question, dict) and question.get("type") == "yesno_conditional":
+                    base_label = question['label']
+                    unique_data_key = (i, base_label)
+                    value_var = self.patient_data.get(unique_data_key)
+                    
+                    if value_var and isinstance(value_var, tk.StringVar) and value_var.get() == "No":
+                        fill_value = question.get("fill_value", "N/A")
+                        for hidden_q_label in question['hides']:
+                            hidden_page_index = self._find_question_page(hidden_q_label)
+                            if hidden_page_index != -1:
+                                hidden_key = (hidden_page_index, hidden_q_label)
+                                # Set the value directly in patient_data.
+                                # If the widget exists, its var will be updated. If not, the value is stored for collection.
+                                if hidden_key in self.patient_data and isinstance(self.patient_data[hidden_key], tk.StringVar):
+                                     self.patient_data[hidden_key].set(fill_value)
+                                else:
+                                     self.patient_data[hidden_key] = fill_value
+
+        column_counts = {}
+        for i, form_key in enumerate(self.form_keys):
+            form_info = FORMS_DATA[form_key]
             for question in form_info["questions"]:
                 base_label = question['label'] if isinstance(question, dict) else question
                 
-                # Generate unique column name
                 count = column_counts.get(base_label, 0) + 1
                 column_counts[base_label] = count
                 unique_col_name = f"{base_label}_{count}" if count > 1 else base_label
 
-                # Get value using unique (page, label) key
                 unique_data_key = (i, base_label)
                 value = self.patient_data.get(unique_data_key)
 
-                if isinstance(question, dict): # Conditional
-                    is_yes = value.get() == "Yes"
-                    final_data[unique_col_name] = "Yes" if is_yes else "No"
-
-                    if not is_yes and question.get("type") == "yesno_conditional":
-                        fill_value = question.get("fill_value", "N/A")
-                        for hidden_q_label in question['hides']:
-                            hidden_page_index = self._find_question_page(hidden_q_label)
-                            hidden_key = (hidden_page_index, hidden_q_label)
-                            hidden_unique_name = self._generate_unique_column_name(final_data, hidden_q_label)
-                            final_data[hidden_unique_name] = fill_value
-                            # Ensure the var is also updated for consistency
-                            if hidden_key in self.patient_data:
-                                self.patient_data[hidden_key].set(fill_value)
-                
-                else: # Standard or skipped question
-                    if isinstance(value, tk.StringVar):
-                        final_data[unique_col_name] = value.get()
-                    elif value is not None: # Skipped page
-                        final_data[unique_col_name] = value
-                    else: # Failsafe
-                        final_data[unique_col_name] = ""
+                if isinstance(value, str):
+                    final_data[unique_col_name] = value
+                elif isinstance(value, tk.StringVar):
+                    final_data[unique_col_name] = value.get()
+                else:
+                    final_data[unique_col_name] = "" # Failsafe
         
         try:
             new_entry_df = pd.DataFrame([final_data])
             
-            # Prepare the final dataframe BEFORE opening the file for writing
             if os.path.exists(filepath):
                 existing_df = pd.read_excel(filepath)
                 
-                # Get the order of columns from the existing file and add new ones to the end
                 final_ordered_columns = existing_df.columns.tolist()
                 for col in new_entry_df.columns:
                     if col not in final_ordered_columns:
                         final_ordered_columns.append(col)
 
-                # Reindex both dataframes to this final, preserved order
                 existing_df = existing_df.reindex(columns=final_ordered_columns)
                 new_entry_df = new_entry_df.reindex(columns=final_ordered_columns)
                 df_to_save = pd.concat([existing_df, new_entry_df], ignore_index=True)
             else:
                 df_to_save = new_entry_df
 
-            # Now, write the final dataframe to the file using ExcelWriter
             with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
                 df_to_save.to_excel(writer, index=False, sheet_name='Responses')
                 
                 worksheet = writer.sheets['Responses']
                 
-                # Define colors for each form section
                 section_fills = [
-                    PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"), # Light Red
-                    PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"), # Light Green
-                    PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"), # Light Yellow
-                    PatternFill(start_color="B4C6E7", end_color="B4C6E7", fill_type="solid"), # Light Blue
-                    PatternFill(start_color="F2B4D0", end_color="F2B4D0", fill_type="solid"), # Pink
-                    PatternFill(start_color="D9D9F3", end_color="D9D9F3", fill_type="solid"), # Lavender
-                    PatternFill(start_color="FFDAB9", end_color="FFDAB9", fill_type="solid"), # Peach
-                    PatternFill(start_color="E0FFFF", end_color="E0FFFF", fill_type="solid"), # Light Cyan
-                    PatternFill(start_color="F0FFF0", end_color="F0FFF0", fill_type="solid"), # Honeydew
-                    PatternFill(start_color="FFFACD", end_color="FFFACD", fill_type="solid"), # Lemon Chiffon
-                    PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid"), # Light Grey
-                    PatternFill(start_color="BDB76B", end_color="BDB76B", fill_type="solid"), # Dark Khaki
-                    PatternFill(start_color="ADD8E6", end_color="ADD8E6", fill_type="solid")  # Light Blue 2
+                    PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"),
+                    PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"),
+                    PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"),
+                    PatternFill(start_color="B4C6E7", end_color="B4C6E7", fill_type="solid"),
+                    PatternFill(start_color="F2B4D0", end_color="F2B4D0", fill_type="solid"),
+                    PatternFill(start_color="D9D9F3", end_color="D9D9F3", fill_type="solid"),
+                    PatternFill(start_color="FFDAB9", end_color="FFDAB9", fill_type="solid"),
+                    PatternFill(start_color="E0FFFF", end_color="E0FFFF", fill_type="solid"),
+                    PatternFill(start_color="F0FFF0", end_color="F0FFF0", fill_type="solid"),
+                    PatternFill(start_color="FFFACD", end_color="FFFACD", fill_type="solid"),
+                    PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid"),
+                    PatternFill(start_color="BDB76B", end_color="BDB76B", fill_type="solid"),
+                    PatternFill(start_color="ADD8E6", end_color="ADD8E6", fill_type="solid")
                 ]
 
-                # Create a map of question base label -> color
                 section_color_map = {}
                 color_index = 0
                 for form_key in self.form_keys:
@@ -351,16 +355,13 @@ class FormWizardApp:
                         section_color_map[q_label] = fill
                     color_index += 1
 
-                # Auto-fit columns and color headers
                 for i, column_name in enumerate(df_to_save.columns):
                     column_letter = get_column_letter(i + 1)
                     
-                    # Find base label to look up color
                     base_label = column_name.rsplit('_', 1)[0] if '_' in column_name and column_name.rsplit('_', 1)[1].isdigit() else column_name
                     if base_label in section_color_map:
                         worksheet.cell(row=1, column=i + 1).fill = section_color_map[base_label]
 
-                    # Auto-sizing logic
                     max_length = len(str(column_name))
                     for cell in worksheet[column_letter]:
                         if cell.row == 1:
