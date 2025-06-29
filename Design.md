@@ -1,121 +1,66 @@
-# Project Design: Multi-Page Medical Questionnaire
+# FormulaireQuiz Application Design
 
-This document outlines the design and evolution of a multi-page, offline-first medical questionnaire application built with Python and `tkinter`. The application guides the user through a series of forms, implements conditional logic based on user input, and saves the complete patient record into a single row in a user-specified Excel file.
+This document outlines the design and architecture of the FormulaireQuiz application, a multi-page medical data collection tool built with Python's `tkinter` library.
 
----
+## 1. Core Functionality
 
-## 1. Core Architecture: The Form Wizard
+The application is a wizard-style questionnaire designed to capture detailed patient data across 13 distinct forms. It provides a user-friendly interface for clinicians to enter data, which is then saved into a structured Excel file for analysis.
 
-The application is architected as a "wizard," presenting the user with a sequence of 13 forms. This structure ensures that data is collected in a logical and orderly manner.
+## 2. Architecture
 
--   **Multi-Page Interface:** The UI is managed in a single window with a content area that displays one form at a time.
--   **Sequential Navigation:** "Next" and "Back" buttons allow the user to move between the different sections of the questionnaire.
--   **Centralized Data Store:** A single Python dictionary holds the user's responses in memory as they navigate through the forms. Data is keyed by a `(page_index, question_label)` tuple to ensure uniqueness, even for questions with identical labels on different forms.
+### 2.1. Main Application (`app.py`)
 
----
+- **Technology:** `tkinter` for the GUI.
+- **Structure:** A single-window application, `FormWizardApp`, that manages multiple pages.
+- **Navigation:** Users can navigate forwards and backwards through the forms using "Next" and "Back" buttons. A "Submit" button is available on the final page.
+- **Lazy Loading:** To ensure fast startup times, the application uses a lazy loading mechanism. The UI widgets for each page are only created the first time the user navigates to that page.
 
-## 2. Key Features & Design Evolution
+### 2.2. Data Definition (`questions_data.py`)
 
-### 2.1. Dynamic & Interactive Form Rendering
+- **Centralized Data:** All form structures, including titles, questions, and conditional logic, are defined in a single Python dictionary called `FORMS_DATA`. This separation of data from the UI logic makes the application easier to maintain and update.
+- **Form Structure:** The application consists of 13 forms, covering:
+    1.  Medical History
+    2.  PreOP State Evaluation
+    3.  Valve Lesion
+    4.  Pre op Echo
+    5.  Operative Data
+    6.  PostUp Early Outcomes
+    7.  PostOP Echo 1
+    8.  Postop MRI
+    9.  Follow Up Echo 1
+    10. Follow Up Echo 2
+    11. Follow Up Echo 3
+    12. Post OP Clinical Follow Up Data (3 months)
+    13. Latest Clinical Data
 
-The initial design used simple text entry fields for all questions. This was updated to a more interactive and user-friendly approach to improve data entry speed and reduce errors.
+## 3. UI Components and Logic
 
--   **Separation of Concerns:** The entire 13-form structure, including all questions, types, and conditional rules, is defined in a dedicated `questions_data.py` file. This cleanly separates the form's data model from the application's UI logic in `app.py`.
+The application dynamically generates three types of input fields based on the definitions in `questions_data.py`:
 
--   **Dynamic Widget Generation:** The UI is not hard-coded. Instead, `app.py` reads the structure from `questions_data.py` and dynamically renders the appropriate widget for each question.
-    -   **Yes/No Questions:** Questions phrased with a `?` are rendered as clickable **Yes/No radio buttons**. This was a significant usability improvement over manual text entry.
-    -   **Multiple Choice Questions:** Questions offering a selection from a numbered list (e.g., `(1=x, 2=y)`) are rendered as **dropdown menus (`Combobox`)**. This prevents invalid entries and clearly presents all options to the user.
-    -   **Standard Text Entry:** All other questions default to a standard text input field.
+1.  **Text Entry:** Standard text fields for open-ended data.
+2.  **Yes/No Questions:** Implemented as a pair of radio buttons for binary choices.
+3.  **Dropdown Menus:** `ttk.Combobox` widgets are used for questions with a predefined set of options (e.g., `(1=x, 2=y)`). The UI displays descriptive text, but the corresponding numerical value is saved to the output file.
 
--   **Enhanced User Experience:**
-    -   **Reliable Scrolling:** All form pages, especially long ones, feature robust mouse-wheel scrolling that is bound to all UI elements, ensuring a smooth and predictable user experience.
-    -   **UI Padding:** Sufficient padding is added to the end of each form to prevent the last question from being obscured by the navigation buttons.
+### 3.1. Conditional Logic
 
-### 2.2. Advanced Conditional Logic
+- **Hiding Fields:** Some "Yes/No" questions can conditionally hide or show a subsequent set of related questions based on the user's selection. For example, answering "No" to "Congenital Malformation?" will hide all detailed questions about specific malformations.
+- **Skipping Pages:** Certain forms (e.g., "Follow Up Echo") are preceded by a dialog box asking if the form should be filled out. If the user selects "No," the application skips the entire page and fills the corresponding data columns with "N/A".
 
-To handle the complexity of a medical questionnaire, the application implements two layers of conditional logic:
+## 4. Data Handling
 
--   **Field-level conditions:** Answering "No" to specific questions (e.g., "Congenital Malformation?", "Postop MRI?") automatically hides irrelevant sub-questions from the UI. When hidden, their corresponding data fields are assigned a specific placeholder value (`"0"` or `"N/A"`) upon submission.
--   **Form-level conditions:** For certain sections (e.g., "Follow Up Echo 1, 2, 3"), the application first asks if the event occurred. If the user answers "No," the entire form is skipped, and all of its associated data fields are automatically filled with "N/A" for the final export.
+### 4.1. File Management
 
-### 2.3. Intelligent & Robust Data Export
+- **Startup Prompt:** On launch, the user is prompted to either create a new Excel response file or append data to an existing one via native file dialogs.
 
-The data export process was designed to be both robust and user-friendly, creating a clean and readable Excel file.
+### 4.2. Data Submission and Excel Export
 
--   **User-Directed File Handling:** Upon startup, the application prompts the user to either create a new response file (choosing the name and location) or open an existing one to append new records.
--   **Unique Column Naming:** A critical bug was discovered where questions with identical labels on different forms (e.g., "ST junction (mm)") would overwrite each other's data. This was resolved by implementing a system that generates unique column names (e.g., `ST junction (mm)_1`, `ST junction (mm)_2`) in the Excel output, ensuring all data is preserved.
--   **Visual Grouping in Excel:** To enhance readability, the header cell for each question is given a background color corresponding to its form section. This provides clear visual grouping without the need for extra separator columns.
--   **Auto-Sized Columns:** Excel columns are automatically resized to fit the length of the longest content, including the question headers, eliminating the need for manual adjustments by the user.
+- **Data Aggregation:** Upon submission, data from all 13 forms is collected into a single row.
+- **Unique Column Names:** To prevent data loss from questions with identical labels on different forms, a unique, incrementing suffix (e.g., `Question_1`, `Question_2`) is appended to each column header in the Excel file.
+- **Excel Formatting:**
+    - **Colored Headers:** The header cell for each question is given a unique background color corresponding to its form/section, providing clear visual grouping of the data.
+    - **Auto-Sized Columns:** Column widths are automatically adjusted to fit the content, including the header.
+- **Form Reset:** After a successful submission, the form resets to its initial state, ready for the next patient entry.
 
----
+## 5. Deployment and CI/CD
 
-## 3. Technical Implementation
-
--   **Language:** Python 3
--   **GUI Library:** `tkinter` (using the modern `ttk` themed widgets).
--   **Data Handling:** `pandas` and `openpyxl` for creating and appending data to the `.xlsx` file.
--   **Distribution:** `PyInstaller` is included in the project to facilitate the creation of standalone executables for users without a Python environment.
--   **Containerization:** A `Dockerfile` is provided for building and running the application in a containerized environment.
-
----
-
-## 4. Final File Structure
-
-```
-.
-├── app.py                  # Main Python application script (wizard logic, UI rendering)
-├── questions_data.py       # Defines the structure and rules of all 13 forms
-├── requirements.txt        # Python dependencies (pandas, openpyxl, pyinstaller)
-├── Dockerfile              # Containerization instructions
-├── README.md               # User-facing documentation and build instructions
-└── Design.md               # This design document
-```
-
-
-If you need to download any dependencies make sure youre in the vmsource ~/venv/FormulaireVenv/bin/activate.fish
-
-
-
-orm to Excel (Offline & Container-Ready)
-
-This project is a **local, offline form** built using Python that allows users to input responses into a simple GUI. Upon submission, responses are **saved to an Excel file** (`responses.xlsx`). This solution is:
-
-- ✅ Completely offline
-- ✅ Easy to use and extend
-- ✅ Compatible with or without Docker
-- ✅ Suitable for local record-keeping and small deployments
-
----
-
-## ✨ Features
-
-- GUI form using `tkinter`
-- Input fields for user data (e.g., Name, Email)
-- Data saved in `.xlsx` file using `pandas`
-- No need for a web server or internet connection
-- Optional Docker containerization
-- Start with default question , they should be customizable after. The workflow is to have every submission equal one line in excell
-with each question being one column
-
----
-
-## 📦 Requirements
-
-### Python Dependencies
-
-Install requirements with:
-
-```bash
-pip install pandas openpyxl
-
-📁 File Structure
-.
-├── app.py          # Python form application
-├── responses.xlsx  # Excel file with responses (auto-created)
-├── Dockerfile      # Optional containerization
-└── README.md       # Documentation
-
-Add timestamp to each entry
-
-
-Im thinking Running the code, it opens a gui, the line is saved on each submission ( possibly through a submit button ) and it append to the xlsx in real time 
+- **Cross-Platform Executable:** The repository includes a GitHub Actions workflow (`.github/workflows/build-windows-exe.yml`) that automatically builds a standalone Windows `.exe` file using `PyInstaller` whenever code is pushed to the `main` branch. This simplifies distribution to non-technical users.

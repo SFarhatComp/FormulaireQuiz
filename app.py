@@ -28,6 +28,7 @@ class FormWizardApp:
         self.patient_data = {} # Will use a unique key: (page_index, question_label)
         self.pages = {}
         self.widget_map = {}
+        self.populated_pages = set()
 
         # Main container for the pages
         self.page_container = tk.Frame(root)
@@ -83,7 +84,7 @@ class FormWizardApp:
         for i, form_key in enumerate(self.form_keys):
             form_data = FORMS_DATA[form_key]
             frame = tk.Frame(self.page_container, padx=10, pady=10)
-            self.pages[i] = frame
+            self.pages[i] = {"frame": frame}
             frame.grid(row=0, column=0, sticky="nsew")
 
             title = ttk.Label(frame, text=form_data["title"], font=("Arial", 16, "bold"))
@@ -96,7 +97,7 @@ class FormWizardApp:
             
             scrollable_frame.bind(
                 "<Configure>",
-                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+                lambda e, c=canvas: c.configure(scrollregion=c.bbox("all"))
             )
             canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
             canvas.configure(yscrollcommand=scrollbar.set)
@@ -104,13 +105,9 @@ class FormWizardApp:
             canvas.pack(side="left", fill="both", expand=True)
             scrollbar.pack(side="right", fill="y")
             
-            self._populate_page(scrollable_frame, form_data["questions"], i)
-            self._bind_recursive(scrollable_frame, canvas)
-
-            # Add some bottom padding to prevent the last widget from being cut off
-            padding_frame = ttk.Frame(scrollable_frame, height=20)
-            padding_frame.pack()
-            self._bind_scroll(padding_frame, canvas)
+            # Store metadata for lazy loading
+            self.pages[i]["canvas"] = canvas
+            self.pages[i]["scrollable_frame"] = scrollable_frame
 
     def _populate_page(self, parent, questions, page_index):
         self.widget_map[parent] = {}
@@ -156,7 +153,7 @@ class FormWizardApp:
                             display_var.set(text)
                             break
             
-            elif isinstance(question, dict): # Catches 'yesno' and 'yesno_conditional'
+            elif isinstance(question, dict) and question.get("type") in ["yesno", "yesno_conditional"]:
                 q_label = question["label"]
                 unique_key = (page_index, q_label)
                 var = tk.StringVar(value="No")
@@ -243,7 +240,25 @@ class FormWizardApp:
     def show_page(self, page_number):
         if page_number in self.pages:
             self.current_page = page_number
-            frame = self.pages[page_number]
+            page_meta = self.pages[page_number]
+            frame = page_meta["frame"]
+
+            # Lazy load page content
+            if page_number not in self.populated_pages:
+                form_key = self.form_keys[page_number]
+                form_data = FORMS_DATA[form_key]
+                scrollable_frame = page_meta["scrollable_frame"]
+                canvas = page_meta["canvas"]
+
+                self._populate_page(scrollable_frame, form_data["questions"], page_number)
+                self._bind_recursive(scrollable_frame, canvas)
+
+                padding_frame = ttk.Frame(scrollable_frame, height=20)
+                padding_frame.pack()
+                self._bind_scroll(padding_frame, canvas)
+
+                self.populated_pages.add(page_number)
+
             frame.tkraise()
 
             self.back_button["state"] = "normal" if self.current_page > 0 else "disabled"
@@ -292,10 +307,11 @@ class FormWizardApp:
         self.current_page = 0
         self.patient_data = {}
         self.widget_map = {}
+        self.populated_pages.clear()
 
         # Destroy all existing page frames' content
-        for page in self.pages.values():
-            for widget in page.winfo_children():
+        for page_meta in self.pages.values():
+            for widget in page_meta["frame"].winfo_children():
                 widget.destroy()
         self.pages = {}
 
